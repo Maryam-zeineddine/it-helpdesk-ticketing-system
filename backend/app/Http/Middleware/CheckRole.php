@@ -17,7 +17,7 @@ class CheckRole
     {
         $user = $request->user();
 
-        if(! $user || ! in_array($user->roleId, $roles)){
+        if(! $user || ! in_array($user->role_id, $roles)){
             return response()->json (['error'=>'Forbidden - insufficient role'], 403);
         }
         return $next($request);

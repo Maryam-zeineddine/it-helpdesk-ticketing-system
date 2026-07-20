@@ -19,7 +19,7 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
-            'roleId' => 'nullable|exists:roles,id', 
+            'role_id' => 'nullable|exists:roles,id', 
         ]);
 
         if($validator -> fails())
@@ -31,7 +31,7 @@ class AuthController extends Controller
             'name' => $request -> name,
             'email' => $request -> email,
             'password' => $request -> password, //auto-hashed via the 'hashed' cast in the User model
-            'roleId' => $request->roleId,
+            'role_id' => $request->role_id,
         ]);
 
         $token = JWTAuth::fromUser($user);

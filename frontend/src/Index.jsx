@@ -18,7 +18,7 @@ function Index(){
                 <>
                 <p>Welcome, {user.name}!</p>
                 <p>Email: {user.email}</p>
-                <p>Role ID: {user.roleId ?? 'No role assigned'}</p>
+                <p>Role ID: {user.role_id ?? 'No role assigned'}</p>
                 <button onClick={handleLogout}>Log Out</button>                
                 </>
             ) : (
