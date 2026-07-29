@@ -3,16 +3,14 @@ import {useAuth} from './AuthContext.jsx';
 import Login from './Login.jsx';
 import Index from './Index.jsx';
 import Register from './Register.jsx';
-//Routes / Route — React Router's way of saying "when the URL is X, show component Y"
+import TicketList from './TicketList.jsx';
+import CreateTicket from './CreateTicket.jsx';
+import TicketDetails from './TicketDetails.jsx';
 
-//ProtectedRoute — a small wrapper component: it checks if a token exists in our shared AuthContext. If yes, it renders whatever's inside it (Index). 
-// If no, it redirects to /login using <Navigate> — this is exactly the "can't view the dashboard without logging in" protection
 function ProtectedRoute({children}){
   const {token} = useAuth();
   return token ? children : <Navigate to="/login" />
 }
-
-//Added <Route path="/register" element={<Register />} /> — a public route, no ProtectedRoute wrapper needed, since anyone (not-yet-logged-in users) needs to reach this page
 
 function App(){
   return(
@@ -24,6 +22,30 @@ function App(){
       element={
         <ProtectedRoute>
           <Index />
+        </ProtectedRoute>
+      }
+      />
+      <Route
+      path="/tickets"
+      element={
+        <ProtectedRoute>
+          <TicketList />
+        </ProtectedRoute>
+      }
+      />
+      <Route
+      path="/tickets/new"
+      element={
+        <ProtectedRoute>
+          <CreateTicket />
+        </ProtectedRoute>
+      }
+      />
+      <Route
+      path="/tickets/:id"
+      element={
+        <ProtectedRoute>
+          <TicketDetails />
         </ProtectedRoute>
       }
       />

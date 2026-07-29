@@ -1,5 +1,5 @@
 import {useAuth} from './AuthContext.jsx';
-import {useNavigate} from 'react-router-dom';
+import {useNavigate, Link} from 'react-router-dom';
 
 function Index(){
 
@@ -18,7 +18,8 @@ function Index(){
                 <>
                 <p>Welcome, {user.name}!</p>
                 <p>Email: {user.email}</p>
-                <p>Role ID: {user.role_id ?? 'No role assigned'}</p>
+                <p>Role: {user.role?.name ?? 'No role assigned'}</p>
+                <p><Link to="/tickets">View Tickets</Link></p>
                 <button onClick={handleLogout}>Log Out</button>                
                 </>
             ) : (
