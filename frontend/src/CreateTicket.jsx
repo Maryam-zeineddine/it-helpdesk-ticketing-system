@@ -4,8 +4,9 @@ import api from './api.js';
 import { useAuth } from './AuthContext.jsx';
 
 function CreateTicket() {
-    const { token } = useAuth();
+    const { token, user } = useAuth();
     const navigate = useNavigate();
+    const canCreate = user?.role?.name === 'Employee' || user?.role?.name === 'Admin';
 
     const [categories, setCategories] = useState([]);
     const [priorities, setPriorities] = useState([]);
@@ -61,6 +62,10 @@ function CreateTicket() {
             setSubmitting(false);
         }
     };
+
+    if(!canCreate) {
+        return <Navigate to ="/tickets"  />;
+    }
 
     return (
         <div>

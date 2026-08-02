@@ -4,7 +4,8 @@ import api from './api.js';
 import { useAuth } from './AuthContext.jsx';
 
 function TicketList() {
-    const { token } = useAuth();
+    const { token, user } = useAuth();
+    const canCreate = user?.role?.name === 'Employee' || user?.role?.name === 'Admin';
 
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -60,8 +61,12 @@ function TicketList() {
 
             <p>
                 <Link to="/">Back to Dashboard</Link>
-                {' | '}
-                <Link to="/tickets/new">+ New Ticket</Link>
+                {canCreate && (
+                    <>
+                        {' | '}
+                        <Link to="/tickets/new">+ New Ticket</Link>
+                    </>
+                )}
             </p>
 
             <div>

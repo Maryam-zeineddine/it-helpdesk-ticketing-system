@@ -54,6 +54,13 @@ class TicketController extends Controller
      */
     public function store(Request $request)
     {
+        $user = Auth::guard('api')->user();
+        $role = $user->role->name;
+
+        if(! in_array($role, ['Employee', 'Admin'], true)){
+            return response() -> json(['error' => 'Only Employees and Admins can create tickets'], 403);
+        }
+        
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:150',
             'description' => 'required|string',
