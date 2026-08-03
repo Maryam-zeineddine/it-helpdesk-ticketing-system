@@ -68,4 +68,25 @@ class Ticket extends Model
     {
         return $this->belongsTo(User::class, 'assigned_to');
     }
+//Comments, activity logs and status history are hasMany, not belongsTo — a ticket can have many comments, many activity log entries, and many status history rows, 
+// whereas a comment/log/history row belongs to just one ticket.
+
+    // A ticket can have many comments/replies left by users
+    public function comments()
+    {
+        return $this->hasMany(TicketComment::class);
+    }
+
+    //A ticket can have many activity log entries (its audit trail)
+    public function activityLogs()
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
+
+    //A ticket can have many status history records (its status timeline)
+    public function statusHistory()
+    {
+        return $this->hasMany(TicketStatusHistory::class);
+    }
+
 }

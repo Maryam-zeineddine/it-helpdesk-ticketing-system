@@ -106,7 +106,7 @@ class TicketController extends Controller
      * Update a ticket. Permission matrix:
      * - Employee: only own ticket, only while Open; may edit title/description/category/priority.
      * - Agent: any ticket; may change status_id (freeform) and self-assign via assigned_to.
-     * - Manager: any ticket; may only reassign via assigned_to (to any agent).
+     * - Manager: forbidden (view/monitor only, per finalized Task 4 matrix).
      * - Admin: any ticket; may change anything.
      */
     public function update(Request $request, $id)
@@ -115,20 +115,23 @@ class TicketController extends Controller
         $ticket = Ticket::with('status')->findOrFail($id);
         $role = $user->role->name;
 
+        //capture the "before" state, before anything gets updated
+        $oldStatusId = $ticket->status_id;
+
         $allowed = [];
 
         switch ($role) {
             case 'Admin':
-                $allowed = ['title', 'description', 'category_id', 'priority_id', 'status_id', 'assigned_to'];
+                $allowed = ['title', 'description', 'category_id', 'priority_id', 'status_id'];
                 break;
 
             case 'Agent':
             case 'IT Support Agent':
-                $allowed = ['status_id', 'assigned_to'];
+                $allowed = ['status_id'];
                 break;
 
             case 'Manager':
-                $allowed = ['assigned_to'];
+                $allowed = [];
                 break;
 
             case 'Employee':
@@ -155,20 +158,12 @@ class TicketController extends Controller
             ], 403);
         }
 
-        // An Agent may only assign the ticket to themself ("receiving" it) —
-        // checked before validation so it isn't masked by an "invalid user id" error
-        if (in_array($role, ['Agent', 'IT Support Agent'], true) && $request->filled('assigned_to')
-            && (int) $request->assigned_to !== (int) $user->id) {
-            return response()->json(['error' => 'Agents may only assign a ticket to themselves'], 403);
-        }
-
         $rules = [
             'title' => 'sometimes|string|max:150',
             'description' => 'sometimes|string',
             'category_id' => 'sometimes|exists:categories,id',
             'priority_id' => 'sometimes|exists:priorities,id',
             'status_id' => 'sometimes|exists:statuses,id',
-            'assigned_to' => 'sometimes|nullable|exists:users,id',
         ];
 
         // Only validate fields this role is allowed to touch
@@ -181,6 +176,16 @@ class TicketController extends Controller
         }
 
         $ticket->update($validator->validated());
+
+        //if status_id was psrt of this update and  it actually changed, log it
+        if(array_key_exists('status_id', $validator->validated()) && (int) $ticket->status_id !== (int) $oldStatusId){
+            \App\Models\TicketStatusHistory::create([
+                'ticket_id' => $ticket->id,
+                'old_status_id' => $oldStatusId,
+                'new_status_id' => $ticket->status_id,
+                'changed_by' => $user->id,
+            ]);
+        }
 
         return response()->json($ticket->load(['category', 'priority', 'status', 'employee', 'assignedAgent']));
     }
@@ -219,5 +224,99 @@ class TicketController extends Controller
         $ticket->delete();
 
         return response()->json(['message' => 'Ticket deleted successfully']);
+    }
+
+    /**
+     * Assign a ticket to Agent.
+     * - Employee: Forbidden
+     * - Agent: may only assign the ticket to themselves (self assign/ "take" it).
+     * - Manager: Forbidden (view/monitor only).
+     * - Admin: may assign to any Agent.
+     */
+    public function assign(Request $request, $id)
+    {
+        $user = Auth::guard('api')->user();
+        $role = $user->role->name;
+        $ticket = Ticket::findOrFail($id);
+
+        if(! in_array($role, ['Agent', 'IT Support Agent', 'Admin'], true)){
+            return response()->json(['error' => 'Forbidden'],403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'assigned_to' => 'required|exists:users,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $assignee = \App\Models\User::with('role')->findOrFail($request->assigned_to);
+
+        //Agent may only assign the ticket to themselves
+        if (in_array($role, ['Agent', 'IT Support Agent'], true) && (int) $assignee->id !== (int) $user->id){
+            return response()->json(['error' => 'Agents may only assign a ticket to themselves'], 403);
+        }
+
+        //Whoever assigns it, the target must be an Agent
+        if (! in_array($assignee->role->name, ['Agent', 'IT Support Agent'], true)){
+            return response()->json(['error' => 'The assignee must be an Agent'], 422);
+        }
+
+        $ticket->update(['assigned_to' => $assignee->id]);
+
+        \App\Models\ActivityLog::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $user->id,
+            'action' => (int) $assignee->id === (int) $user->id ? 'self_assigned' : 'assigned',
+            'description' => (int) $assignee->id === (int) $user->id
+                ? "{$user->name} took this ticket"
+                : "{$user->name} assigned this ticket to {$assignee->name}.",
+        ]);
+
+        return response()->json($ticket->load(['category', 'priority', 'status', 'employee', 'assignedAgent']));
+    }
+
+/**
+ * Combined activity feed for a ticket — merges activity_logs and ticket_status_history
+ * into a single chronological timeline, ready for the frontend to render as-is. Instead of having to call two separate endpoints and merge it in the frontend, we do it here in the backend.
+ */
+
+public function activity($id)
+{
+    $user = Auth::guard('api')->user();
+    $ticket = Ticket::findOrFail($id);
+
+    if($user->role->name === 'Employee' && $ticket->employee_id !== $user->id){
+        return response()->json(['error' => 'Forbidden'], 403);
+    }
+
+    //General activity: assignments, comments.. already in the shape we want
+    $logs = $ticket->activityLogs()->with('user')->get()->map(function ($log){
+        return [
+            'action' => $log->action,
+            'description' => $log->description,
+            'user' => $log->user->name,
+            'created_at' => $log->created_at,
+        ];
+    });
+
+    //Status history: we need to convert old_status_id and new_status_id into names, and shape it like the activity logs
+    $statusChanges = $ticket->statusHistory()->with(['oldStatus', 'newStatus', 'changedBy'])->get()->map(function ($history){
+        $oldName = $history->oldStatus->name ?? 'none';
+        $newName = $history->newStatus->name;
+
+        return [
+            'action' => 'status_changed',
+            'description' => "{$history->changedBy->name} changed the status from {$oldName} to {$newName}.",
+            'user' => $history->changedBy->name,
+            'created_at' => $history->created_at,
+        ];
+    });
+
+    //Merge both collections, sort by created_at ascending (oldest first), and return
+    $timeline = $logs->concat($statusChanges)->sortBy('created_at')->values();
+
+    return response()->json($timeline);
     }
 }

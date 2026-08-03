@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\LookupController;
+use App\Http\Controllers\TicketCommentController;
 
 //Public routes. no token requiered
 //anyone can call these to create an account or get a token.
@@ -23,6 +24,10 @@ Route:: middleware('auth:api')->group(function(){
     Route::get('/priorities', [LookupController::class, 'priorities']);
     Route::get('/statuses', [LookupController::class, 'statuses']);
     Route::get('/agents', [LookupController::class, 'agents']);
+    Route::post('/tickets/{id}/assign', [TicketController::class,'assign']);
+    Route::get('/tickets/{id}/comments', [TicketCommentController::class, 'index']);
+    Route::post('/tickets/{id}/comments', [TicketCommentController::class, 'store']);
+    Route::get('/tickets/{id}/activity', [TicketController::class, 'activity']);
 });
 
 
