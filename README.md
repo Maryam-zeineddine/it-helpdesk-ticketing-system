@@ -29,19 +29,28 @@ Full stack web app for employees to submit IT support tickets, and agents/admins
 - Full ticket CRUD via `TicketController`, with role-based permissions:
   - **Employee**: create tickets; view/edit/delete only their own, and only while status is "Open"
   - **Agent**: view all tickets; change status freely; self-assign a ticket
-  - **Manager**: view all tickets; assign a ticket to any Agent
+  - **Manager**: view all tickets
   - **Admin**: full access — create, view, edit, delete, assign, any ticket
 - Search & filtering on `GET /tickets` (`category_id`, `priority_id`, `status_id`, `search`)
 - Lookup endpoints (`/categories`, `/priorities`, `/statuses`, `/agents`) for frontend dropdowns
 - Frontend: Ticket List (with filters), Create Ticket form, and a single role-aware Ticket Details page that shows different controls depending on the logged-in user's role
 
-## Known issues / notes
-- MySQL `AUTO_INCREMENT` values are not reused after deletes — this is expected MySQL behavior (protects against orphaned foreign key references), not a bug.
+## Week 4 Deliverables
+- `ticket_comments`, `activity_logs`, `ticket_status_history` tables — support comments, audit trail, and structured status history
+- `POST /tickets/{id}/assign` — dedicated assignment endpoint; writes to `activity_logs`
+  - **Agent**: self-assign only
+  - **Admin**: assign to any Agent
+  - **Manager**: forbidden — view/monitor only
+- Status changes via `PUT /tickets/{id}` now write to `ticket_status_history` (old/new status, who changed it)
+- `TicketCommentController` — comments/replies on tickets, with an `is_internal` flag (Agent-only) for team-only notes hidden from Employees
+- `GET /tickets/{id}/activity` — merged, chronological timeline combining `activity_logs` and `ticket_status_history` into a single feed
+- Workflow lock: a **Closed** ticket cannot be edited or reassigned by Agent; only **Admin** can reopen it by changing its status. Once Closed, assignment is locked for everyone (including Admin) until reopened.
+- `active_only` filter on `GET /tickets` — excludes Resolved/Closed tickets
+- Frontend: Comments section, reworked Assign/Status controls (per-role, using the new `/assign` endpoint), and an expandable "View History" row on the Ticket List page
 
 ## Known limitations / Next steps
 - New users register with `role_id: null` (no role assigned by default).
   There is currently no admin interface to view *users* and assign them a role
-  (ticket *assignment* to existing Agents is implemented, but assigning a role
-  to a new user is still manual, via direct DB update).
+  (ticket *assignment* to existing Agents is implemented, but assigning a role to a new user is still manual, via direct DB update).
 - Forgot/reset password and profile management are not yet implemented.
 - UI styling has been deliberately deferred — functionality is prioritized while requirements are still evolving week to week; a dedicated styling pass is planned once the feature set is more complete.

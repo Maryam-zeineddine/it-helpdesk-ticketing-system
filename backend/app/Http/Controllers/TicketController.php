@@ -304,8 +304,13 @@ public function activity($id)
 {
     $user = Auth::guard('api')->user();
     $ticket = Ticket::findOrFail($id);
+    $role = $user->role->name;
 
     if($user->role->name === 'Employee' && $ticket->employee_id !== $user->id){
+        return response()->json(['error' => 'Forbidden'], 403);
+    }
+
+    if (in_array($role, ['Agent', 'IT Support Agent'], true) && $ticket->assigned_to !== $user->id){
         return response()->json(['error' => 'Forbidden'], 403);
     }
 

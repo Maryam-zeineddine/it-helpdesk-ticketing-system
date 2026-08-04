@@ -67,7 +67,7 @@ function TicketDetails() {
             api.get('/statuses', authHeader).then((res) => setStatuses(res.data));
         }
 
-        if (role === 'Manager' || role === 'Admin') {
+        if (role === 'Admin') {
             api.get('/agents', authHeader).then((res) => setAgents(res.data));
         }
 
@@ -83,6 +83,7 @@ function TicketDetails() {
 
     const isOwner = ticket && user && ticket.employee_id === user.id;
     const isOpen = ticket && ticket.status?.name === 'Open';
+    const isClosed = ticket  && ticket.status?.name === 'Closed';
 
     const handleUpdate = async (payload) => {
         setActionError('');
@@ -94,6 +95,23 @@ function TicketDetails() {
             const data = err.response?.data;
             const message = data?.error
                 || (data ? Object.values(data).flat().join(' ') : 'Failed to update ticket');
+            setActionError(message);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    //this function calls the /assign endpoint (separate from the existing handleUpdate)
+    const handleAssign = async (assignedToId) => {
+        setActionError('');
+        setSaving(true);
+        try{
+            const response = await api.post(`/tickets/${id}/assign`, {assigned_to: assignedToId}, authHeader);
+            setTicket(response.data);
+        } catch (err) {
+            const data = err.response?.data;
+            const message = data?.error
+                || (data ? Object.values(data).flat().join(' '): 'Failed to assign ticket');
             setActionError(message);
         } finally {
             setSaving(false);
@@ -176,39 +194,30 @@ function TicketDetails() {
             {(role === 'Agent' || role === 'IT Support Agent') && (
                 <div>
                     <h3>Manage Ticket</h3>
-                    <div>
-                        <label>Status</label><br />
-                        <select value={statusId} onChange={(e) => setStatusId(e.target.value)}>
-                            {statuses.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                        </select>
-                        {' '}
-                        <button disabled={saving} onClick={() => handleUpdate({ status_id: statusId })}>
-                            Update Status
-                        </button>
-                    </div>
-                    <div style={{ marginTop: '0.5rem' }}>
-                        {ticket.assigned_agent?.id === user.id ? (
-                            <em>This ticket is assigned to you.</em>
-                        ) : (
-                            <button disabled={saving} onClick={() => handleUpdate({ assigned_to: user.id })}>
-                                Assign to Me
-                            </button>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {role === 'Manager' && (
-                <div>
-                    <h3>Assign Ticket</h3>
-                    <select value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}>
-                        <option value="">-- Select an agent --</option>
-                        {agents.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-                    </select>
-                    {' '}
-                    <button disabled={saving} onClick={() => handleUpdate({ assigned_to: assignedTo })}>
-                        Assign
-                    </button>
+                    {isClosed && <p><em>This ticket is closed and con no longer be modified or reassigned.</em></p>}
+                    {!isClosed && (
+                        <>
+                            <div>
+                                <label>Status</label><br />
+                                <select value={statusId} onChange={(e) => setStatusId(e.target.value)}>
+                                    {statuses.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                </select>
+                                {' '}
+                                <button disabled={saving} onClick={() => handleUpdate({ status_id: statusId })}>
+                                     Update Status
+                                </button>
+                            </div>
+                            <div style={{ marginTop: '0.5rem' }}>
+                                {ticket.assigned_agent?.id === user.id ? (
+                                    <em>This ticket is assigned to you.</em>
+                                ) : (
+                                    <button disabled={saving} onClick={() => handleAssign( user.id )}>
+                                        Assign to Me
+                                    </button>
+                                    )}
+                            </div>
+                        </>
+                )}
                 </div>
             )}
 
@@ -241,13 +250,6 @@ function TicketDetails() {
                             {statuses.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                         </select>
                     </div>
-                    <div>
-                        <label>Assigned To</label><br />
-                        <select value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}>
-                            <option value="">Unassigned</option>
-                            {agents.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-                        </select>
-                    </div>
                     <button
                         disabled={saving}
                         onClick={() => handleUpdate({
@@ -256,13 +258,30 @@ function TicketDetails() {
                             category_id: categoryId,
                             priority_id: priorityId,
                             status_id: statusId,
-                            assigned_to: assignedTo || null,
                         })}
                     >
                         {saving ? 'Saving...' : 'Save Changes'}
                     </button>
                     {' '}
                     <button onClick={handleDelete} style={{ color: 'red' }}>Delete Ticket</button>
+
+                    <div style={{ marginTop: '1rem'}}>
+                        <h4>Assign Ticket</h4>
+                        {isClosed? (
+                            <p><em>This ticket is Closed and cannot be reassigned. Reopen it first by changing its status above.</em></p>
+                        ):(
+                            <>
+                                <select value ={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}>
+                                    <option value="">--Select an agent --</option>
+                                    {agents.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                </select>
+                                {' '}
+                                <button disabled={saving || !assignedTo} onClick={() => handleAssign(assignedTo)}>
+                                    Assign
+                                </button>
+                            </>
+                        )}
+                    </div>
                 </div>
             )}
 
@@ -277,7 +296,7 @@ export default TicketDetails;
  * This is one page, but it behaves differently depending on who's viewing it — mirroring the exact permission matrix we built into the backend:
  * Everyone sees the same read-only summary at the top (title, description, category, status, who submitted it, who it's assigned to)
  * If you're the Employee who owns the ticket AND it's still "Open" → you see an edit form (title/description/category/priority) plus a Delete button
- * If you're an Agent → you see a status dropdown (freeform, any value) and an "Assign to Me" button
- * If you're a Manager → you see only an "assign to an agent" dropdown, nothing else
- * If you're an Admin → you see everything: full edit fields, status change, reassignment, and delete
+ * If you're an Agent, and the ticket isn't Closed → you see a status dropdown (freeform, any value) and an "Assign to Me" button
+ * If you're a Manager → you see only the read-only summary and comments; no edit, status, or assignment controls (view/monitor only)
+ * If you're an Admin → you see full edit fields, status change, and delete always; the assign section is available unless the ticket is Closed (in which case status must be changed first to reopen it)
  */
