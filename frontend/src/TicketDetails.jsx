@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from './api.js';
 import { useAuth } from './AuthContext.jsx';
+import TicketComments from './TicketComments.jsx';
 
 function TicketDetails() {
     const { id } = useParams();
@@ -264,6 +265,8 @@ function TicketDetails() {
                     <button onClick={handleDelete} style={{ color: 'red' }}>Delete Ticket</button>
                 </div>
             )}
+
+            <TicketComments ticketId={id} />
         </div>
     );
 }

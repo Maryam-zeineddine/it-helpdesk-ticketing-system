@@ -37,6 +37,11 @@ class TicketController extends Controller
             $query->where('status_id', $request->status_id);
         }
 
+        if ($request->boolean('active_only')){
+            $excludedStatusIds = Status::whereIn('name', ['Closed', 'Resolved'])->pluck('id');
+            $query->whereNotIn('status_id', $excludedStatusIds);
+        }
+
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -114,6 +119,14 @@ class TicketController extends Controller
         $user = Auth::guard('api')->user();
         $ticket = Ticket::with('status')->findOrFail($id);
         $role = $user->role->name;
+
+        //if the ticket's current status is "Closed" and the role is Agent, block the request entirely
+        //this if happens before the switch ($role) block that builds $allowed, so it short-circuits everything downstream
+        if ($ticket->status->name === 'Closed' && $role !=='Admin'){
+            return response()->json([
+                'error' => 'This ticket is closed and can no longer be modified.',
+            ], 403);
+        }
 
         //capture the "before" state, before anything gets updated
         $oldStatusId = $ticket->status_id;
@@ -237,7 +250,12 @@ class TicketController extends Controller
     {
         $user = Auth::guard('api')->user();
         $role = $user->role->name;
-        $ticket = Ticket::findOrFail($id);
+        $ticket = Ticket::with('status')->findOrFail($id);
+
+        //if the ticket's current status is "Closed", block the request of assigning entirely
+        if ($ticket->status->name === 'Closed'){
+            return response()->json(['error' => 'This ticket is closed and can no longer be assigned.'], 403);
+        }
 
         if(! in_array($role, ['Agent', 'IT Support Agent', 'Admin'], true)){
             return response()->json(['error' => 'Forbidden'],403);
