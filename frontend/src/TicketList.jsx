@@ -15,6 +15,10 @@ function TicketList() {
     const [priorities, setPriorities] = useState([]);
     const [statuses, setStatuses] = useState([]);
     const [activeOnly, setActiveOnly] = useState(false);
+    const [showAll, setShowAll] = useState(false);
+    const [fromDate, setFromDate] = useState('');
+    const [toDate, setToDate] = useState('');
+
 
     const [expandedTicketId, setExpandedTicketId] = useState(null);
     const [activityData, setActivityData] = useState([]);
@@ -53,6 +57,9 @@ function TicketList() {
         if (statusId) params.status_id = statusId;
         if (search) params.search = search;
         if (activeOnly) params.active_only = 1;
+        if (showAll) params.show_all = 1;
+        if (fromDate) params.from = fromDate;
+        if (toDate) params.to = toDate;
 
         api.get('/tickets', {
             headers: { Authorization: `Bearer ${token}` },
@@ -61,7 +68,7 @@ function TicketList() {
             .then((response) => setTickets(response.data))
             .catch(() => setError('Failed to load tickets'))
             .finally(() => setLoading(false));
-    }, [token, categoryId, priorityId, statusId, search, activeOnly]);
+    }, [token, categoryId, priorityId, statusId, search, activeOnly, showAll, fromDate, toDate]);
 
     const handleViewHistory = (ticketId) => {
         //if this  row is already open, clicking again just closes it
@@ -130,6 +137,33 @@ function TicketList() {
                         onChange={(e) => setActiveOnly(e.target.checked)}
                     />
                     {' '}Active tickets only (exclude Resolved/Closed)
+                </label>
+
+                <label>
+                    <input
+                        type = "checkbox"
+                        checked={showAll}
+                        onChange={(e) => setShowAll(e.target.checked)}
+                    />
+                    {' '} Show all tickets (ignore last 2 months default)
+                </label>
+
+                <label>
+                    {' '}From:{' '}
+                    <input 
+                        type="date"
+                        value={fromDate}
+                        onChange={(e) => setFromDate(e.target.value)}
+                    />
+                </label>
+
+                <label>
+                    {' '}To:{' '}
+                    <input
+                        type="date"
+                        value={toDate}
+                        onChange={(e) => setToDate(e.target.value)}
+                    />
                 </label>
             </div>
 

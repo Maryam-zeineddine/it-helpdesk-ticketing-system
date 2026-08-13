@@ -78,7 +78,6 @@ function TicketDetails() {
                     setPriorities(p.data);
                 });
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [role, token]);
 
     const isOwner = ticket && user && ticket.employee_id === user.id;

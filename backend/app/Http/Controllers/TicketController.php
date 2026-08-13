@@ -12,17 +12,28 @@ class TicketController extends Controller
 {
     /**
      * List tickets.
-     * Employees only see their own tickets; other roles see all tickets.
+     * Employees only see their own tickets; Agents only see tickets assigned to them;
+     * Managers and Admins see all tickets.
      * Supports optional filtering by category_id, priority_id, status_id, and a text search.
+     * By default, only tickets created in the last 2 months are returned — pass
+     * show_all=1 to see everything, or from/to (YYYY-MM-DD) for an explicit range.
      */
     public function index(Request $request)
     {
         $user = Auth::guard('api')->user();
+        $role = $user->role->name;
 
         $query = Ticket::with(['category', 'priority', 'status', 'employee', 'assignedAgent']);
 
-        if ($user->role->name === 'Employee') {
+        if ($role === 'Employee') {
             $query->where('employee_id', $user->id);
+        }
+
+        if(in_array($role, ['Agent', 'IT Support Agent'], true)){
+            $query->where(function ($q) use ($user){
+                $q->where('assigned_to', $user->id)
+                  ->orwhereNull('assigned_to'); 
+            });
         }
 
         if ($request->filled('category_id')) {
@@ -48,6 +59,20 @@ class TicketController extends Controller
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
             });
+        }
+
+        //unless the caller explicitly asks for everything
+        // (show_all=1) or supplies its own from/to dates, only return tickets
+        // created within the last 2 months.
+        if($request->filled('from') || $request->filled('to')){
+            if($request->filled('from')){
+                $query->whereDate('created_at', '>=', $request->from);
+            }
+            if($request->filled('to')){
+                $query->whereDate('created_at', '<=', $request->to);
+            }
+        } elseif(! $request->boolean('showall')){
+            $query->where('created_at', '>=', now()->subMonths(2));
         }
 
         return response()->json($query->latest()->get());
