@@ -6,6 +6,7 @@ use App\Http\Controllers\TicketController;
 use App\Http\Controllers\LookupController;
 use App\Http\Controllers\TicketCommentController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\NotificationController;
 
 //Public routes. no token requiered
 //anyone can call these to create an account or get a token.
@@ -30,6 +31,9 @@ Route:: middleware('auth:api')->group(function(){
     Route::post('/tickets/{id}/comments', [TicketCommentController::class, 'store']);
     Route::get('/tickets/{id}/activity', [TicketController::class, 'activity']);
     Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 });
 
 

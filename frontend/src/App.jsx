@@ -6,10 +6,18 @@ import Register from './Register.jsx';
 import TicketList from './TicketList.jsx';
 import CreateTicket from './CreateTicket.jsx';
 import TicketDetails from './TicketDetails.jsx';
+import NotificationBell from './NotificationBell.jsx';
 
 function ProtectedRoute({children}){
   const {token} = useAuth();
-  return token ? children : <Navigate to="/login" />
+  if(!token) return <Navigate to="/login"/>
+
+  return(
+    <>
+      <NotificationBell />
+      {children}
+    </>
+  );
 }
 
 function App(){

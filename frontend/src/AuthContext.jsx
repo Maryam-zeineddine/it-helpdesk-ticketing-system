@@ -1,25 +1,29 @@
 import { createContext, useContext, useState} from 'react';
 
-//creates a "box" that can hold shared data, starting empty
 const AuthContext = createContext(null);
 
-//AuthProvider — a wrapper component; anything placed inside it can access the shared token/user data
 export function AuthProvider({children})
 {
-    //token / user state — holds the JWT string and the logged-in user's info (name, email, roleId) once they log in
-    const [token, setToken] = useState(null);
-    const [user, setUser] = useState(null);
+    // On first load, try to restore token/user from localStorage
+    // (survives page refresh, unlike plain useState which resets to null)
+    const [token, setToken] = useState(() => localStorage.getItem('token'));
+    const [user, setUser] = useState(() => {
+        const storedUser = localStorage.getItem('user');
+        return storedUser ? JSON.parse(storedUser) : null;
+    });
 
-    //login(newToken, newUser) — a function pages will call after a successful /api/login response, to actually store the token/user in this shared state
     const login = (newToken, newUser) => {
         setToken(newToken);
         setUser(newUser);
+        localStorage.setItem('token', newToken);
+        localStorage.setItem('user', JSON.stringify(newUser));
     }
 
-    //logout() — clears everything, used when logging out
     const logout = () => {
         setToken(null);
         setUser(null);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
     }
 
     return(
@@ -29,7 +33,6 @@ export function AuthProvider({children})
     )
 }
 
-//useAuth() — a custom hook that allows any page to access the shared token/user data and login/logout functions
 export function useAuth(){
     return useContext(AuthContext);
 }

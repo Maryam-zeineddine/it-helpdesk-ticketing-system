@@ -32,7 +32,7 @@ class TicketController extends Controller
         if(in_array($role, ['Agent', 'IT Support Agent'], true)){
             $query->where(function ($q) use ($user){
                 $q->where('assigned_to', $user->id)
-                  ->orwhereNull('assigned_to'); 
+                  ->orWhereNull('assigned_to'); 
             });
         }
 
@@ -71,7 +71,7 @@ class TicketController extends Controller
             if($request->filled('to')){
                 $query->whereDate('created_at', '<=', $request->to);
             }
-        } elseif(! $request->boolean('showall')){
+        } elseif(! $request->boolean('show_all')){
             $query->where('created_at', '>=', now()->subMonths(2));
         }
 
@@ -113,6 +113,17 @@ class TicketController extends Controller
             'employee_id' => Auth::guard('api')->id(),
         ]);
 
+        //Notify the users when a ticket is created
+        $recipientIds = \App\Services\NotificationService::userIdsWithRoles(
+            ['Agent', 'IT Support Agent', 'Manager', 'Admin']
+        );
+        \App\Services\NotificationService::notify(
+            $recipientIds,
+            'New ticket created',
+            "{$user->name} created a new ticket: \"{$ticket->title}\".",
+            "/tickets/{$ticket->id}",
+            'Ticket Created'
+        );
         return response()->json($ticket->load(['category', 'priority', 'status', 'employee']), 201);
     }
 
@@ -223,6 +234,21 @@ class TicketController extends Controller
                 'new_status_id' => $ticket->status_id,
                 'changed_by' => $user->id,
             ]);
+
+            $newStatus = \App\Models\Status::find($ticket->status_id);
+
+            if($newStatus && $newStatus->name === 'Closed'){
+                $recipientIds = \App\Services\NotificationService::userIdsWithRoles(['Manager', 'Admin']);
+                $recipientIds[] = $ticket->employee_id;
+
+                \App\Services\NotificationService::notify(
+                    $recipientIds,
+                    'Ticket closed',
+                    "Ticket \"{$ticket->title}\" was closed by {$user->name}.",
+                    "/tickets/{$ticket->id}",
+                    'Ticket Closed'
+                );
+            }
         }
 
         return response()->json($ticket->load(['category', 'priority', 'status', 'employee', 'assignedAgent']));
@@ -316,6 +342,17 @@ class TicketController extends Controller
                 ? "{$user->name} took this ticket"
                 : "{$user->name} assigned this ticket to {$assignee->name}.",
         ]);
+
+        //Notify assignee
+        if((int) $assignee->id !== (int) $user->id){
+            \App\Services\NotificationService::notify(
+                $assignee->id,
+                'Ticket assigned to you',
+                "\"{$ticket->title}\" has been assigned to you by {$user->name}.",
+                "/tickets/{$ticket->id}",
+                'Ticket Assigned'
+            );
+        }
 
         return response()->json($ticket->load(['category', 'priority', 'status', 'employee', 'assignedAgent']));
     }

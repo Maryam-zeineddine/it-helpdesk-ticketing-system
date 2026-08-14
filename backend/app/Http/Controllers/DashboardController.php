@@ -46,21 +46,21 @@ class DashboardController extends Controller
                 ->count();
         }
 
-        return response()->json([
+        $response = [
             'role' => $role,
             'total' => $query->count(),
             'by_status' =>  $countsByStatus,
-        ]);
+        ];
 
-        //Agents also see the unassigned tickets
+        //Agents and Admins also see the unassigned tickets, including who reported each one
         if(in_array($role, ['Agent', 'IT Support Agent', 'Admin'], true)){
-            $response['unassigned_tickets'] = Ticket::with('category')
+            $response['unassigned_tickets'] = Ticket::with(['category', 'employee'])
                 ->whereNull('assigned_to')
                 ->where('created_at', '>=', now()->subMonths(2))
                 ->latest()
-                ->get(['id', 'title', 'category_id', 'created_at']);
+                ->get(['id', 'title', 'category_id', 'employee_id', 'created_at']);
         }
 
-        return response() -> json($response);
+        return response()->json($response);
     }
 }

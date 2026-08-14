@@ -27,5 +27,7 @@ class DatabaseSeeder extends Seeder
             PrioritySeeder::class,
             StatusSeeder::class,
         ]);
+
+        $this->call(NotificationTypeSeeder::class);
     }
 }

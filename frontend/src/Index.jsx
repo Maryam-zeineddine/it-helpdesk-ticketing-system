@@ -36,6 +36,9 @@ function Index(){
                 <p>Email: {user.email}</p>
                 <p>Role: {user.role?.name ?? 'No role assigned'}</p>
                 <p><Link to="/tickets">View Tickets</Link></p>
+                {(user.role?.name === 'Employee' || user.role?.name === 'Admin') && (
+                    <p><Link to="/tickets/new">+ Create New Ticket</Link></p>
+                )}
 
                 {loading && <p>Loading summary...</p>}
                 {error && <p style={{color: 'red'}}>{error}</p>}
@@ -82,6 +85,7 @@ function Index(){
                                         <li key={ticket.id} style={{marginBottom: '0.5rem'}}>
                                             <Link to={`/tickets/${ticket.id}`}>{ticket.title}</Link>
                                             {' - '}{ticket.category?.name ?? 'Uncategorized'}
+                                            {' - reported by '}{ticket.employee?.name ?? 'Unknown'}
                                             {' - '}{new Date(ticket.created_at).toLocaleDateString()}
                                         </li>
                                     ))}
