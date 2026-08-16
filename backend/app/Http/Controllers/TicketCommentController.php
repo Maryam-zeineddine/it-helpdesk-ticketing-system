@@ -24,7 +24,7 @@ class TicketCommentController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $query = TicketComment::with('user')->where('ticket_id', $ticket->id);
+        $query = TicketComment::with(['user', 'attachment'])->where('ticket_id', $ticket->id);
         
         if ($role === 'Employee') {
             $query->where('is_internal', false);
@@ -46,8 +46,15 @@ class TicketCommentController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
+        //attach an image
+        //'bail' stops at the first failing rule).
         $validator = Validator::make($request->all(), [
            'body' => 'required|string',
+           'image' => 'bail|nullable|file|min:1024|max:10240|mimes:jpg,jpeg,png,gif',
+        ], [
+            'image.min' => 'Image is too small. Minimum size is 1MB.',
+            'image.max' => 'Image is too large. Maximum size is 10MB.',
+            'image.mimes' => 'Only jpg, jpeg, png, or gif images are allowed on comments.',
         ]);
 
         if ($validator->fails()) {
@@ -64,6 +71,21 @@ class TicketCommentController extends Controller
             'is_internal' => $isInternal,
         ]);
 
+        // If an image was included, store it 
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $path = $file->store('attachments', 'public');
+
+            \App\Models\Attachment::create([
+                'comment_id' => $comment->id,
+                'uploaded_by' => $user->id,
+                'file_name' => $file->getClientOriginalName(),
+                'file_path' => $path,
+                'mime_type' => $file->getClientMimeType(),
+                'file_size' => $file->getSize(),
+            ]);
+        }
+
         ActivityLog::create([
             'user_id' => $user->id,
             'action' => 'commented',
@@ -71,10 +93,7 @@ class TicketCommentController extends Controller
             'description' => "{$user->name} added a comment.",
         ]);
 
-        return response()->json($comment->load('user'), 201);
+        return response()->json($comment->load(['user', 'attachment']), 201);
     }
-
-
-
 }
 

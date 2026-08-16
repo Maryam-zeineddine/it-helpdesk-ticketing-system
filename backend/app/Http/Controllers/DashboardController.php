@@ -19,6 +19,9 @@ class DashboardController extends Controller
     public function summary()
     {
         $user = Auth::guard('api')->user();
+        if(! $user->role){
+            return response()->json(['error' => 'Your account has no role assigned. Contact an administrator.'], 403);
+        }
         $role = $user->role->name;
 
         $query = Ticket::query();

@@ -23,7 +23,10 @@ function Index(){
 
         api.get('/dashboard/summary', {headers: {Authorization: `Bearer ${token}`}})
             .then((response) => setSummary(response.data))
-            .catch(() => setError('Failed to load dashboard summary'))
+            .catch((err) => {
+                const message = err.response?.data?.error ?? 'Failed to load dashboard summary';
+                setError(message);
+            })
             .finally(() => setloading(false));
     }, [token]);
 

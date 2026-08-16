@@ -13,6 +13,7 @@ function TicketComments({ticketId}) {
     const [comments, setComments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [imageFile, setImageFile] = useState(null);
 
     const [body, setBody] = useState('');
     const [isInternal, setIsInternal] = useState(false);
@@ -44,16 +45,24 @@ function TicketComments({ticketId}) {
         setPosting(true);
         setError('');
         try{
-            await api.post(`/tickets/${ticketId}/comments`, 
-                {body, is_internal: isInternal}, authHeader);
+            const formData = new FormData();
+            formData.append('body', body);
+            formData.append('is_internal', isInternal ? 1 : 0);
+            if(imageFile) formData.append('image', imageFile);
+
+            await api.post(`/tickets/${ticketId}/comments`, formData, {
+                 headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data'},
+            });
 
             //Clear the input fields and reload comments after successful submission
             setBody('');
             setIsInternal(false);
+            setImageFile(null);
             loadComments();
         } catch (err) {
             const data = err.response?.data;
-            setError(data?.error?? 'Failed to post comment');
+            const message = data?.error || (data?.errors ? Object.values(data.errors).flat().join(' ') : 'Failed to post comment');
+            setError(message);
         } finally {
             setPosting(false);
         }
@@ -85,6 +94,15 @@ function TicketComments({ticketId}) {
                         )}
                         </div>
                         <p style={{margin: '0.25rem 0 0 0'}}>{comment.body}</p>
+                        {comment.attachment && (
+                            <a href={`http://127.0.0.1:8000/storage/${comment.attachment.file_path}`} target="_blank" rel="noreferrer">
+                                <img
+                                    src={`http://127.0.0.1:8000/storage/${comment.attachment.file_path}`}
+                                    alt={comment.attachment.fille_name}
+                                    style={{mawWidth: '200px', maxHeight: '200px', marginTop: '0.5rem', display: 'block'}}
+                                />
+                            </a>
+                        )}
                     </li>
                 ))}
             </ul>
@@ -97,6 +115,12 @@ function TicketComments({ticketId}) {
                     placeholder="Write a comment..."
                     style = {{ width:'100%'}}
                 />
+
+                <div>
+                    <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files[0])} />
+                    <p style={{ fontSize: '0.8rem', color: '#666'}}>Optional image (jpg, jpeg, png, gif - 1-10MB)</p>
+                </div>
+
 
                 {/*Chackbox only rendered for Agents; matches the backend rule that only 
                 Agents can mark comments as internal*/}

@@ -134,7 +134,7 @@ class TicketController extends Controller
     public function show($id)
     {
         $user = Auth::guard('api')->user();
-        $ticket = Ticket::with(['category', 'priority', 'status', 'employee', 'assignedAgent'])->findOrFail($id);
+        $ticket = Ticket::with(['category', 'priority', 'status', 'employee', 'assignedAgent', 'attachments'])->findOrFail($id);
 
         if ($user->role->name === 'Employee' && $ticket->employee_id !== $user->id) {
             return response()->json(['error' => 'Forbidden'], 403);

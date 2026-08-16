@@ -30,6 +30,10 @@ function TicketDetails() {
     const [statusId, setStatusId] = useState('');
     const [assignedTo, setAssignedTo] = useState('');
 
+    const [attachmentFile, setAttachmentFile] = useState(null);
+    const [attachmentError, setAttachmentError] = useState('');
+    const [uploadingAttachment, setUploadingAttachment] = useState(false);
+
     const authHeader = { headers: { Authorization: `Bearer ${token}` } };
 
     const loadTicket = () => {
@@ -117,6 +121,32 @@ function TicketDetails() {
         }
     };
 
+    //upload an attachment to ticket
+    const handleUploadAttachment  = async () => {
+        if (!attachmentFile) return;
+
+        setAttachmentError('');
+        setUploadingAttachment(true);
+
+        const formData = new FormData();
+        formData.append('file', attachmentFile);
+
+        try{
+            const response = await api.post(`/tickets/${id}/attachments`, formData, {
+                headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data'},
+            });
+
+            setTicket((prev) => ({...prev, attachments: [...(prev.attachments ?? []), response.data] }));
+            setAttachmentFile(null);
+        } catch (err) {
+            const data = err.response?.data;
+            const message = data?.error || (data ? Object.values(data).flat().join(' '): 'Failed to upload attachment');
+            setAttachmentError(message);
+        } finally {
+            setUploadingAttachment(false);
+        }
+    };
+
     const handleDelete = async () => {
         if (!window.confirm('Are you sure you want to delete this ticket?')) return;
 
@@ -149,6 +179,41 @@ function TicketDetails() {
                 <li><strong>Assigned to:</strong> {ticket.assigned_agent?.name ?? 'Unassigned'}</li>
                 <li><strong>Created:</strong> {new Date(ticket.created_at).toLocaleString()}</li>
             </ul>
+
+            <div style={{marginTop: '1rem'}}>
+                <h3>Attachments</h3>
+                {ticket.attachments && ticket.attachments.length > 0 ? (
+                    <ul>
+                        {ticket.attachments.map((a) => (
+                            <li key={a.id}>
+                                <a href={`http://127.0.0.1:8000/storage/${a.file_path}`} target="_blank" rel="noreferrer">
+                                    {a.file_name}
+                                </a>
+                                {' '}({(a.file_size / 1024).toFixed(0)} KB)
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p style={{ color: '#666'}}>No attachments yet.</p>
+                )}
+
+                {((role === 'Employee' && isOwner) || role === 'Admin') && !isClosed && (
+                    <div>
+                        <input
+                            type="file"
+                            onChange={(e) => setAttachmentFile(e.target.files[0])}
+                        />
+                        {' '}
+                        <button disabled={!attachmentFile || uploadingAttachment} onClick={handleUploadAttachment}>
+                                {uploadingAttachment ? 'Uploading...' : 'Upload Attachment'}
+                        </button>
+                        <p style={{fontSize: '0.85rem', color: '#666'}}>
+                            Allowed types: jpg, jpeg, png, gif, pdf, doc, docx, xls, xlsx, txt, zip. Size: 1-10MB.
+                        </p>
+                        {attachmentError && <p style={{color: 'red'}}>{attachmentError}</p>}
+                    </div>
+                )}
+            </div>
 
             {actionError && <p style={{ color: 'red' }}>{actionError}</p>}
 
