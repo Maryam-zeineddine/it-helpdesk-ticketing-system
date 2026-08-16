@@ -36,6 +36,8 @@ Route:: middleware('auth:api')->group(function(){
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
     Route::post('/tickets/{id}/attachments', [AttachmentController::class, 'storeForTicket']);
+    Route::post('/tickets/{id}/request-cancellation', [TicketController::class, 'requestCancellation']);
+    Route::post('/tickets/{id}/resolve-cancellation', [TicketController::class, 'resolveCancellation']);
 });
 
 

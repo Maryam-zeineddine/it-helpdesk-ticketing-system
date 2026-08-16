@@ -15,6 +15,8 @@ class StatusSeeder extends Seeder
             'Pending',
             'Resolved',
             'Closed',
+            'Cancellation Requested',
+            'Cancelled',
         ];
 
         foreach ($statuses as $name) {

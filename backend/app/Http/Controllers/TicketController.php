@@ -198,6 +198,18 @@ class TicketController extends Controller
                 $allowed = ['title', 'description', 'category_id', 'priority_id'];
                 break;
         }
+        
+        //agents can change status unless into the 2 cancellation statuses they need  a reason
+        if (in_array($role, ['Agent', 'IT Support Agent'], true) && $request->filled('status_id')) {
+            $restrictedStatusNames = ['Cancellation Requested', 'Cancelled'];
+            $requestedStatus = \App\Models\Status::find($request->status_id);
+
+            if ($requestedStatus && in_array($requestedStatus->name, $restrictedStatusNames, true)) {
+                return response()->json([
+                    'error' => 'Use the cancellation request endpoint instead of setting this status directly.',
+                ], 403);
+            }
+        }
 
         // Reject the whole request if it contains any field this role isn't allowed to touch
         $disallowed = array_diff(array_keys($request->all()), $allowed);
@@ -357,6 +369,68 @@ class TicketController extends Controller
         return response()->json($ticket->load(['category', 'priority', 'status', 'employee', 'assignedAgent']));
     }
 
+    //Agent requests cancellation of their assigned ticket with a reason
+    public function requestCancellation(Request $request, $id)
+    {
+        $user = Auth::guard('api') -> user();
+        $role = $user->role->name;
+        $ticket = Ticket::with('status')->findOrFail($id);
+
+        if(! in_array($role, ['Agent', 'IT Support Agent'], true)){
+            return response()->json(['error' => 'Only the assigned Agent may request cancellation'],403);
+        }
+
+        if((int) $ticket->assigned_to !== (int) $user->id){
+            return response()->json(['error' => 'You may only request cancellation on tickets assigned to you'], 403);
+        }
+
+        if($ticket->status->name === 'Closed'){
+            return response()->json(['error' => 'This ticket is closed and cannot be cancelled'], 403);
+        }
+
+        if($ticket->status->name === 'Cancellation Requested'){
+            return response()->json(['error' => 'A cancellation request is already pending for this ticket'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'reason' => 'required|string|max:500',
+        ]);
+
+        if($validator -> fails()){
+            return response()->json($validator->errors(), 422);
+        }
+
+        $oldStatusId = $ticket->status_id;
+        $cancellationRequestedStatus = \App\Models\Status::where('name', 'Cancellation Requested')->firstOrFail();
+
+        $ticket->update(['status_id' => $cancellationRequestedStatus->id]);
+
+        \App\Models\TicketStatusHistory::create([
+            'ticket_id' => $ticket->id,
+            'old_status_id' => $oldStatusId,
+            'new_status_id' => $ticket->status_id,
+            'changed_by' => $user->id,
+        ]);
+
+        \App\Models\ActivityLog::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $user->id,
+            'action' => 'cancellation_requested',
+            'description' => "{$user->name} requested cancellation: \"{$request->reason}\"",
+        ]);
+
+        $recipientIds = \App\Services\NotificationService::userIdsWithRoles(['Manager', 'Admin']);
+        \App\Services\NotificationService::notify(
+            $recipientIds,
+            'Cancellation requested',
+            "{$user->name} requested cancellation of \"{$ticket->title}\": \"{$request->reason}\"",
+            "/tickets/{$ticket->id}",
+            'Cancellation Requested' 
+        );
+
+        return response()->json($ticket->load(['category', 'priority', 'status', 'employee', 'assignedAgent']));
+    }
+
 /**
  * Combined activity feed for a ticket — merges activity_logs and ticket_status_history
  * into a single chronological timeline, ready for the frontend to render as-is. Instead of having to call two separate endpoints and merge it in the frontend, we do it here in the backend.
@@ -403,5 +477,88 @@ public function activity($id)
     $timeline = $logs->concat($statusChanges)->sortBy('created_at')->values();
 
     return response()->json($timeline);
-    }
 }
+
+    //Manager resolves a pending cancellation request : confirms cnacellation or re-assign to different agent (status goes back to the original one before cancelling)
+    public function resolveCancellation(Request $request, $id)
+    {
+        $user = Auth::guard('api')->user();
+        $role = $user->role->name;
+        $ticket = Ticket::with('status')->findOrFail($id);
+
+        if($role !== 'Manager'){
+                return response()->json(['error'=> 'Only a Manager may resolve a cancellation request'],403);
+        }
+
+        if($ticket->status->name !== 'Cancellation Requested'){
+            return response()->json(['error' => 'This ticket has no pending cancellation request'],403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'decision' =>'required|in:cancel,reassign',
+            'assigned_to'=>'required_if:decision,reassign|exists:users,id',
+        ]);
+
+        if($validator->fails()){
+            return response()->json($validator->errors(),422);
+        }
+
+        $oldStatusId = $ticket->status_id;
+
+        if($request->decision === 'cancel'){
+            $newStatus = \App\Models\Status::where('name', 'Cancelled')->firstOrFail();
+            $ticket->update(['status_id' => $newStatus->id]);
+
+            $description = "{$user->name} confirmed cancellation of this ticket";
+        } else{
+            //find what  status this ticket was before cancelllation
+            $lastChange = \App\Models\TicketStatusHistory::where('ticket_id', $ticket->id)
+                ->where('new_status_id', $oldStatusId)
+                ->latest()
+                ->first();
+
+            $revertStatusId = $lastChange->old_status_id ?? \App\Models\Status::where('name', 'Open')->firstOrFail()->id;
+            $assignee = \App\Models\User::with('role')->findOrFail($request->assigned_to);
+
+            if(! in_array($assignee->role->name, ['Agent', 'IT Support Agent'], true)){
+                return response()->json(['error' => 'The assignee must be an Agent'], 422);
+            }
+
+            $ticket->update(['status_id' => $revertStatusId, 'assigned_to' => $assignee->id]);
+            $description = "{$user->name} reassigned this ticket to {$assignee->name} instead of cancelling";
+        }
+
+        \App\Models\TicketStatusHistory::create([
+            'ticket_id' => $ticket->id,
+            'old_status_id' => $oldStatusId,
+            'new_status_id' => $ticket->status_id,
+            'changed_by' => $user->id,
+        ]);
+
+        \App\Models\ActivityLog::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $user->id,
+            'action' => 'cancellation_resolved',
+            'description' => $description,
+        ]);
+
+        // Notify whichever Agent originally requested the cancellation
+        $lastRequestLog = \App\Models\ActivityLog::where('ticket_id', $ticket->id)
+            ->where('action', 'cancellation_requested')
+            ->latest()
+            ->first();
+
+         if ($lastRequestLog) {
+            \App\Services\NotificationService::notify(
+                $lastRequestLog->user_id,
+                'Cancellation request resolved',
+                $description,
+                "/tickets/{$ticket->id}",
+                'Cancellation Resolved'
+            );
+        }
+                
+        return response()->json($ticket->load(['category', 'priority', 'status', 'employee', 'assignedAgent']));
+        }
+    }
+

@@ -9,7 +9,7 @@ class NotificationTypeSeeder extends Seeder
 {
     public function run(): void
     {
-        $types = ['Ticket Created', 'Ticket Assigned', 'Ticket Closed'];
+        $types = ['Ticket Created', 'Ticket Assigned', 'Ticket Closed', 'Cancellation Requested', 'Cancellation Resolved',];
 
         foreach ($types as $name){
             NotificationType::firstOrCreate(['name' => $name]);

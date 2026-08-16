@@ -34,6 +34,14 @@ function TicketDetails() {
     const [attachmentError, setAttachmentError] = useState('');
     const [uploadingAttachment, setUploadingAttachment] = useState(false);
 
+    const [cancellationReason, setCancellationReason] = useState('');
+    const [requestingCancellation, setRequestingCancellation] = useState(false);
+
+    const [resolveDecision, setResolveDecision] = useState('cancel');
+    const [resolveAssignedTo, setResolveAssignedTo] = useState('');
+    const [resolvingCancellation, setResolvingCancellation] = useState(false);
+    const [cancellationReasonText, setCancellationReasonText] = useState('');
+
     const authHeader = { headers: { Authorization: `Bearer ${token}` } };
 
     const loadTicket = () => {
@@ -71,7 +79,7 @@ function TicketDetails() {
             api.get('/statuses', authHeader).then((res) => setStatuses(res.data));
         }
 
-        if (role === 'Admin') {
+        if (role === 'Admin' || role === 'Manager') {
             api.get('/agents', authHeader).then((res) => setAgents(res.data));
         }
 
@@ -84,9 +92,25 @@ function TicketDetails() {
         }
     }, [role, token]);
 
+    //when a cancellation is pending, pull the reason from activity log so the manager can see it
+    useEffect(() => {
+        if(!ticket || ticket.status?.name !== 'Cancellation Requested'){
+            setCancellationReasonText('');
+            return;
+        }
+        api.get(`/tickets/${id}/activity`, authHeader)
+            .then((response) => {
+                const requestLog = [...response.data].reverse() //activity() returns oldest so reverse to the newest
+                    .find((entry) => entry.action === 'cancellation_requested');
+                setCancellationReasonText(requestLog?.description ?? '');
+            })
+            .catch(() => setCancellationReasonText(''));
+    }, [ticket?.status?.name, id, token]);
+
     const isOwner = ticket && user && ticket.employee_id === user.id;
     const isOpen = ticket && ticket.status?.name === 'Open';
     const isClosed = ticket  && ticket.status?.name === 'Closed';
+    const isCancellationRequested = ticket && ticket.status?.name === 'Cancellation Requested';
 
     const handleUpdate = async (payload) => {
         setActionError('');
@@ -121,6 +145,42 @@ function TicketDetails() {
         }
     };
 
+    //Agent requests cancellation of their assigned tickets wit reason
+    const handleRequestCancellation = async () => {
+        if(!cancellationReason.trim()) return;
+
+        setActionError('');
+        setRequestingCancellation(true);
+        try{
+            const response = await api.post(`/tickets/${id}/request-cancellation`, {reason: cancellationReason}, authHeader);
+            setTicket(response.data);
+            setCancellationReason('');
+        } catch(err){
+            const data = err.response?.data;
+            const message = data?.error || (data ? Object.values(data).flat().join(' '): 'Failed to request cancellation');
+            setActionError(message);
+        } finally {
+            setRequestingCancellation(false);
+        }
+    };
+
+    //Manager resolves a pending cancellation: confirm or reassign
+    const handleResolveCancellation = async () => {
+        setActionError('');
+        setResolvingCancellation(true);
+        try{
+            const payload = resolveDecision === 'reassign' ? {decision: 'reassign', assigned_to: resolveAssignedTo} : {decision: 'cancel'};
+            const response = await api.post(`/tickets/${id}/resolve-cancellation`, payload, authHeader);
+            setTicket(response.data);
+            setResolveAssignedTo('');
+        }catch(err){
+            const data = err.response?.data;
+            const message = data?.error || (data ? Object.values(data).flat().join(' ') : 'Failed to resolve cancellation');
+            setActionError(message);
+        }finally{
+            setResolvingCancellation(false);
+        }
+    };
     //upload an attachment to ticket
     const handleUploadAttachment  = async () => {
         if (!attachmentFile) return;
@@ -280,6 +340,29 @@ function TicketDetails() {
                                     </button>
                                     )}
                             </div>
+
+                            {ticket.assigned_agent?.id === user.id && !isCancellationRequested && (
+                                <div style={{ marginTop: '1rem' }}>
+                                    <h4>Request Cancellation</h4>
+                                    <textarea
+                                        value={cancellationReason}
+                                        onChange={(e) => setCancellationReason(e.target.value)}
+                                        rows={2}
+                                        placeholder="Reason for cancellation..."
+                                        style={{ width: '100%' }}
+                                    />
+                                    <button
+                                        disabled={!cancellationReason.trim() || requestingCancellation}
+                                        onClick={handleRequestCancellation}
+                                    >
+                                        {requestingCancellation ? 'Requesting...' : 'Request Cancellation'}
+                                    </button>
+                                </div>
+                            )}
+                            {isCancellationRequested && (
+                                <p style={{ marginTop: '1rem' }}><em>A cancellation request is pending Manager review.</em></p>
+                            )}
+
                         </>
                 )}
                 </div>
@@ -347,6 +430,61 @@ function TicketDetails() {
                         )}
                     </div>
                 </div>
+            )}
+        
+            {role === 'Manager' && isCancellationRequested && (
+                <div>
+                    <h3>Resolve Cancellation Request</h3>
+                    {cancellationReasonText && (
+                        <p style={{background: '#fff8e1', padding: '0.5rem', borderRadius: '4px'}}>
+                            {cancellationReasonText}
+                        </p>
+                    )}
+                    <div>
+                        <label>
+                            <input
+                                type="radio"
+                                name="resolveDecision"
+                                value="cancel"
+                                checked={resolveDecision === 'cancel'}
+                                onChange={() => setResolveDecision('cancel')}
+                            />
+                            {' '}Confirm Cancellation
+                        </label>
+                        <br />
+                        <label>
+                            <input
+                                type="radio"
+                                name="resolveDecision"
+                                value="reassign"
+                                checked={resolveDecision === 'reassign'}
+                                onChange={() => setResolveDecision('reassign')}
+                            />
+                            {' '}Reassign to a different Agent instead
+                        </label>
+                    </div>
+
+                    {resolveDecision === 'reassign' && (
+                        <div style={{ marginTop: '0.5rem' }}>
+                            <select value={resolveAssignedTo} onChange={(e) => setResolveAssignedTo(e.target.value)}>
+                                <option value="">-- Select an agent --</option>
+                                {agents.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                            </select>
+                        </div>
+                    )}
+
+                    <button
+                        style={{ marginTop: '0.5rem' }}
+                        disabled={resolvingCancellation || (resolveDecision === 'reassign' && !resolveAssignedTo)}
+                        onClick={handleResolveCancellation}
+                    >
+                        {resolvingCancellation ? 'Submitting...' : 'Submit Decision'}
+                    </button>
+                </div>
+            )}
+
+            {role === 'Manager' && !isCancellationRequested && (
+                <p><em>View-only. No pending cancellation requests on this ticket.</em></p>
             )}
 
             <TicketComments ticketId={id} />
