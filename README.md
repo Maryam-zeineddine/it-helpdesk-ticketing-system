@@ -73,7 +73,6 @@ Full stack web app for employees to submit IT support tickets, and agents/admins
   - Bar chart (Recharts) visualizing counts by status
 
 ## Known limitations / Next steps
-## Known limitations / Next steps
 - New users register with `role_id: null` (no role assigned by default).
   There is currently no admin interface to view *users* and assign them a role
   (ticket *assignment* to existing Agents is implemented, but assigning a role to a new user is still manual, via direct DB update). The dashboard now fails gracefully with a clear message for role-less users instead of a server error, but the underlying registration flow is unchanged.
