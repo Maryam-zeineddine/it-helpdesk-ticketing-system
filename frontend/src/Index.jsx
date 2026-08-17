@@ -1,7 +1,8 @@
 import {useAuth} from './AuthContext.jsx';
 import {useNavigate, Link} from 'react-router-dom';
-import { useState, useEffect} from 'react';
+import {useState, useEffect} from 'react';
 import api from './api.js';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 function Index(){
 
@@ -12,6 +13,11 @@ function Index(){
     const [loading, setloading] = useState(true);
     const [error, setError] = useState('');
 
+    const [reportRange, setReportRange] = useState('month');
+    const [reportData, setReportData] = useState(null);
+    const [reportLoading, setReportLoading] = useState(false);
+    const [reportError, setReportError] = useState('');
+ 
     const handleLogout = () => {
         logout();
         navigate('/login');
@@ -29,6 +35,18 @@ function Index(){
             })
             .finally(() => setloading(false));
     }, [token]);
+
+    //admin only can reports data
+    useEffect(() => {
+        if(!token || user?.role?.name !== 'Admin') return;
+
+        setReportLoading(true);
+        setReportError('');
+        api.get(`/dashboard/report?range=${reportRange}`, {headers: {Authorization: `Bearer ${token}`}})
+            .then((response) => setReportData(response.data))
+            .catch(() => setReportError('Failed to load report'))
+            .finally(() => setReportLoading(false));
+    }, [token, reportRange, user]);
 
     return(
         <div>
@@ -98,6 +116,52 @@ function Index(){
 
                         {summary.unassigned_tickets && summary.unassigned_tickets.length === 0 && (
                             <p style={{ marginTop: '1.5rem', color: '#666'}}>No new unassigned tickets right now </p>
+                        )}
+                    </div>
+                )}
+
+                {user.role?.name === 'Admin' && (
+                    <div style={{ marginTop: '2rem' }}>
+                        <h2>Admin Report</h2>
+
+                        <button
+                            onClick={() => setReportRange('month')}
+                            style={{ fontWeight: reportRange === 'month' ? 'bold' : 'normal' }}
+                        >
+                            This Month
+                        </button>
+                        {' '}
+                        <button
+                            onClick={() => setReportRange('year')}
+                            style={{ fontWeight: reportRange === 'year' ? 'bold' : 'normal' }}
+                        >
+                            This Year
+                        </button>
+
+                        {reportLoading && <p>Loading report...</p>}
+                        {reportError && <p style={{ color: 'red' }}>{reportError}</p>}
+
+                        {reportData && (
+                            <div style={{ marginTop: '1rem' }}>
+                                <p>
+                                    <strong>Total tickets:</strong> {reportData.total}
+                                    {' — '}
+                                    <strong>Average time to resolve:</strong>{' '}
+                                    {reportData.average_resolution_hours !== null
+                                        ? `${reportData.average_resolution_hours} hours`
+                                        : 'No resolved/closed tickets yet in this range'}
+                                </p>
+
+                                <ResponsiveContainer width="100%" height={300}>
+                                    <BarChart data={Object.entries(reportData.by_status).map(([status, count]) => ({ status, count }))}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="status" />
+                                        <YAxis allowDecimals={false} />
+                                        <Tooltip />
+                                        <Bar dataKey="count" fill="#4a90d9" />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
                         )}
                     </div>
                 )}

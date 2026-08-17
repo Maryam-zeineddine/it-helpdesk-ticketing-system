@@ -48,9 +48,37 @@ Full stack web app for employees to submit IT support tickets, and agents/admins
 - `active_only` filter on `GET /tickets` — excludes Resolved/Closed tickets
 - Frontend: Comments section, reworked Assign/Status controls (per-role, using the new `/assign` endpoint), and an expandable "View History" row on the Ticket List page
 
+## Week 5 Deliverables
+- **Role-based dashboard** (`GET /dashboard/summary`) — landing page after login shows ticket counts by status, scoped per role (Employee: own tickets; Agent: assigned + unassigned tickets available to self-assign; Manager/Admin: all tickets); Agent and Admin also see a list of unassigned tickets
+- Agent scoping fix on `GET /tickets` — Agents now see only tickets assigned to them plus unassigned tickets (previously saw everything); added `show_all`, `from`, `to` query params to override the default recent-tickets window
+- `GET /tickets` and dashboard queries default to the **last 2 months** unless overridden
+- **Notifications system** — `notifications` and `notification_types` tables (lookup pattern), `NotificationService` helper, triggered on ticket creation (Agents/Managers/Admins notified), assignment (assignee notified), and closure (Employee + Managers/Admins notified)
+  - `GET /notifications`, `GET /notifications/unread-count`, `POST /notifications/{id}/read` (two-way read/unread toggle)
+  - Frontend: bell icon with unread badge, dropdown list, per-notification checkbox to mark read/unread independent of navigating, one-time-per-session toast on login showing the most recent notification
+- **File attachments**
+  - `attachments` table — shared between ticket-level and comment-level uploads (`ticket_id`/`comment_id`, exactly one set per row)
+  - Ticket-level: Employee (own ticket) or Admin only; full extension whitelist (jpg, jpeg, png, gif, pdf, doc, docx, xls, xlsx, txt, zip); 1–10MB enforced via Laravel validation (`bail` + ordered rules to avoid stacked error messages)
+  - Comment-level: any commenter; images only (jpg, jpeg, png, gif); optional, attached in the same request as the comment
+  - Files stored on disk (`storage/app/public`, via `storage:link`); only filename/path/mime/size saved in DB, never binary
+  - Frontend: upload form + attachment list on Ticket Details; inline image thumbnails on comments
+- **Ticket cancellation workflow**
+  - Two new statuses: `Cancellation Requested`, `Cancelled`
+  - `POST /tickets/{id}/request-cancellation` — assigned Agent only, requires a reason (logged to `activity_logs`)
+  - `POST /tickets/{id}/resolve-cancellation` — Manager only; confirms cancellation or reassigns to a different Agent (status reverts to whichever status the ticket was in before the request, via `ticket_status_history`)
+  - Agents blocked from reaching either cancellation status via the normal `PUT /tickets/{id}` status field — must use the dedicated endpoints; Admin is intentionally exempt from this restriction
+  - Frontend: Agent request form with reason field; Manager resolution UI showing the Agent's reason, with Confirm/Reassign options
+- **Admin reporting dashboard** (`GET /dashboard/report`, Admin only)
+  - Ticket counts by status for This Month / This Year (toggle)
+  - Average time-to-resolve, in hours (measured from ticket creation to the earliest time it reached Resolved or Closed, via `ticket_status_history`)
+  - Bar chart (Recharts) visualizing counts by status
+
+## Known limitations / Next steps
 ## Known limitations / Next steps
 - New users register with `role_id: null` (no role assigned by default).
   There is currently no admin interface to view *users* and assign them a role
-  (ticket *assignment* to existing Agents is implemented, but assigning a role to a new user is still manual, via direct DB update).
+  (ticket *assignment* to existing Agents is implemented, but assigning a role to a new user is still manual, via direct DB update). The dashboard now fails gracefully with a clear message for role-less users instead of a server error, but the underlying registration flow is unchanged.
 - Forgot/reset password and profile management are not yet implemented.
+- SMTP email notifications are deferred — notifications are currently in-app only (DB-backed, bell icon + toast).
+- File URLs (attachments, comment images) are currently hardcoded to `http://127.0.0.1:8000/storage/...` in the frontend; this will need to be made environment-aware before deploying anywhere beyond localhost.
+- Cancellation reasons are stored as free text in `activity_logs`, not in a dedicated table — sufficient for the current "view history" use case, but not queryable/reportable on their own if that's ever needed.
 - UI styling has been deliberately deferred — functionality is prioritized while requirements are still evolving week to week; a dedicated styling pass is planned once the feature set is more complete.

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Ticket;
 use App\Models\Status;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
@@ -65,5 +66,59 @@ class DashboardController extends Controller
         }
 
         return response()->json($response);
+    }
+
+    //reports for admins
+    public function report (Request $request)
+    {
+        $user = Auth::guard('api') -> user();
+
+        if(! $user->role || $user->role->name !== 'Admin'){
+            return response()->json(['error' => 'Forbidden'], 403);
+        }
+
+        $range = $request->query('range', 'month');
+        $start = $range === 'year' ? now()->startOfYear() : now()->startOfMonth();
+
+        $query = Ticket::where('created_at', '>=', $start);
+
+
+        $statuses = Status::all();
+        $countsByStatus = [];
+        foreach($statuses as $status){
+            $countsByStatus[$status->name] = (clone $query)->where('status_id', $status->id)->count();
+        }
+
+        //foreach ticket find the earliest time it hit either resolved or closed, then measure how long
+        // that took from creation. Averaged across all finished tickets in range.
+        $finishedStatusIds = Status::whereIn('name', ['Resolved','Closed'])->pluck('id');
+
+        $finishedTimes = \DB::table('ticket_status_history')
+            ->join('tickets', 'tickets.id', '=', 'ticket_status_history.ticket_id')
+            ->whereIn('ticket_status_history.new_status_id', $finishedStatusIds)
+            ->where('tickets.created_at', '>=', $start)
+            ->select(
+                'ticket_status_history.ticket_id',
+                \DB::raw('MIN(ticket_status_history.created_at) as finished_at'),
+                'tickets.created_at as ticket_created_at'
+            )
+            ->groupBy('ticket_status_history.ticket_id', 'tickets.created_at')
+            ->get();
+
+        $averageResolutionHours = null;
+        if($finishedTimes->count() > 0){
+            $totalHours = $finishedTimes->sum(function ($row){
+                return \Carbon\Carbon::parse($row->ticket_created_at)
+                ->diffInHours(\Carbon\Carbon::parse($row->finished_at));
+            });
+            $averageResolutionHours = round($totalHours / $finishedTimes->count());
+        }
+
+        return response()->json([
+            'range' => $range,
+            'total' => $query ->count(),
+            'by_status' => $countsByStatus,
+            'average_resolution_hours' => $averageResolutionHours,
+        ]);
     }
 }
