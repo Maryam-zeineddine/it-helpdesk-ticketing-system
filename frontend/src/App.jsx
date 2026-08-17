@@ -7,6 +7,7 @@ import TicketList from './TicketList.jsx';
 import CreateTicket from './CreateTicket.jsx';
 import TicketDetails from './TicketDetails.jsx';
 import NotificationBell from './NotificationBell.jsx';
+import Reports from './Reports.jsx';
 
 function ProtectedRoute({children}){
   const {token} = useAuth();
@@ -54,6 +55,15 @@ function App(){
       element={
         <ProtectedRoute>
           <TicketDetails />
+        </ProtectedRoute>
+      }
+      />
+
+      <Route
+      path="/reports"
+      element={
+        <ProtectedRoute>
+          <Reports />
         </ProtectedRoute>
       }
       />

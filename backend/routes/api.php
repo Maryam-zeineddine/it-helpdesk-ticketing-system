@@ -39,7 +39,8 @@ Route:: middleware('auth:api')->group(function(){
     Route::post('/tickets/{id}/request-cancellation', [TicketController::class, 'requestCancellation']);
     Route::post('/tickets/{id}/resolve-cancellation', [TicketController::class, 'resolveCancellation']);
     Route::get('/dashboard/report', [DashboardController::class, 'report']);});
-
+    Route::get('/dashboard/report/export/pdf',  [DashboardController::class, 'exportPdf']);
+    Route::get('/dashboard/report/export/excel', [DashboardController::class, 'exportExcel']);
 
 
  
