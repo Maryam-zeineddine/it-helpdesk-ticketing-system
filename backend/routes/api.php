@@ -8,6 +8,7 @@ use App\Http\Controllers\TicketCommentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AttachmentController;
+use App\Http\Controllers\AiController;
 
 //Public routes. no token requiered
 //anyone can call these to create an account or get a token.
@@ -41,6 +42,9 @@ Route:: middleware('auth:api')->group(function(){
     Route::get('/dashboard/report', [DashboardController::class, 'report']);});
     Route::get('/dashboard/report/export/pdf',  [DashboardController::class, 'exportPdf']);
     Route::get('/dashboard/report/export/excel', [DashboardController::class, 'exportExcel']);
+    Route::post('/ai/suggest-category-priority', [AiController::class, 'suggestCategoryPriority']);
+    Route::post('/ai/chat', [AiController::class, 'chat']);
+
 
 
  

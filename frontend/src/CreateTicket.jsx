@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, Navigate, Link } from 'react-router-dom';
 import api from './api.js';
 import { useAuth } from './AuthContext.jsx';
+import AiChatWidget from './AiChatWidget.jsx';
 
 function CreateTicket() {
     const { token, user } = useAuth();
@@ -19,6 +20,14 @@ function CreateTicket() {
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
+    //AI suggestion state
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiSuggestion, setAiSuggestion] = useState(null);
+    const [aiUnavailable, setAiUnavailable] = useState(false);
+    const categoryTouchedByUser = useRef(false);
+    const priorityTouchedByUser = useRef(false);
+    const debounceTimer = useRef(null);
+
     useEffect(() => {
         const authHeader = { headers: { Authorization: `Bearer ${token}` } };
 
@@ -32,6 +41,55 @@ function CreateTicket() {
             })
             .catch(() => setError('Failed to load categories/priorities'));
     }, [token]);
+
+    //Ai suggestions: after 1.2s after the user stops typing
+    //fires only when there is a text to analyze not on any keystroke
+    useEffect(() => {
+        if (debounceTimer.current) clearTimeout(debounceTimer.current);
+
+        if (!title.trim() || description.trim().length < 15) {
+            return;
+        }
+
+        debounceTimer.current = setTimeout(() => {
+            setAiLoading(true);
+            setAiUnavailable(false);
+
+            api.post(
+                '/ai/suggest-category-priority',
+                { title, description },
+                { headers: { Authorization: `Bearer ${token}` } }
+            )
+                .then((response) => {
+                    const { category, priority } = response.data;
+
+                    if (!category || !priority) {
+                        setAiUnavailable(true);
+                        setAiSuggestion(null);
+                        return;
+                    }
+
+                    setAiSuggestion({ category, priority });
+
+                    //only auto-fill fields the employee hasn't already touched
+                    if (!categoryTouchedByUser.current) {
+                        const match = categories.find((c) => c.name === category);
+                        if (match) setCategoryId(String(match.id));
+                    }
+                    if (!priorityTouchedByUser.current) {
+                        const match = priorities.find((p) => p.name === priority);
+                        if (match) setPriorityId(String(match.id));
+                    }
+                })
+                .catch(() => {
+                    setAiUnavailable(true);
+                    setAiSuggestion(null);
+                })
+                .finally(() => setAiLoading(false));
+        }, 1200);
+
+        return () => clearTimeout(debounceTimer.current);
+    }, [title, description, token, categories, priorities]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -63,8 +121,8 @@ function CreateTicket() {
         }
     };
 
-    if(!canCreate) {
-        return <Navigate to ="/tickets"  />;
+    if (!canCreate) {
+        return <Navigate to="/tickets" />;
     }
 
     return (
@@ -95,11 +153,29 @@ function CreateTicket() {
                     />
                 </div>
 
+                {aiLoading && <p style={{ color: '#888' }}>Thinking about category/priority...</p>}
+
+                {aiSuggestion && !aiLoading && (
+                    <p style={{ color: '#2a6', fontSize: '0.9rem' }}>
+                        🤖 AI suggested: <strong>{aiSuggestion.category}</strong> / <strong>{aiSuggestion.priority}</strong>
+                        {' '}(you can change this below)
+                    </p>
+                )}
+
+                {aiUnavailable && !aiLoading && (
+                    <p style={{ color: '#888', fontSize: '0.9rem' }}>
+                        AI suggestion unavailable right now — please choose manually below.
+                    </p>
+                )}
+
                 <div>
                     <label>Category</label><br />
                     <select
                         value={categoryId}
-                        onChange={(e) => setCategoryId(e.target.value)}
+                        onChange={(e) => {
+                            categoryTouchedByUser.current = true;
+                            setCategoryId(e.target.value);
+                        }}
                         required
                     >
                         <option value="">-- Select a category --</option>
@@ -113,7 +189,10 @@ function CreateTicket() {
                     <label>Priority</label><br />
                     <select
                         value={priorityId}
-                        onChange={(e) => setPriorityId(e.target.value)}
+                        onChange={(e) => {
+                            priorityTouchedByUser.current = true;
+                            setPriorityId(e.target.value);
+                        }}
                         required
                     >
                         <option value="">-- Select a priority --</option>
@@ -129,6 +208,7 @@ function CreateTicket() {
                     {submitting ? 'Creating...' : 'Create Ticket'}
                 </button>
             </form>
+            <AiChatWidget />
         </div>
     );
 }
@@ -136,6 +216,6 @@ function CreateTicket() {
 export default CreateTicket;
 
 /**
- * A simple form: title, description, category dropdown, priority dropdown. 
+ * A simple form: title, description, category dropdown, priority dropdown.
  * When submitted, it POSTs to /tickets
  */
