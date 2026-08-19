@@ -6,19 +6,14 @@ import Register from './Register.jsx';
 import TicketList from './TicketList.jsx';
 import CreateTicket from './CreateTicket.jsx';
 import TicketDetails from './TicketDetails.jsx';
-import NotificationBell from './NotificationBell.jsx';
 import Reports from './Reports.jsx';
+import Layout from './Layout.jsx';
 
-function ProtectedRoute({children}){
-  const {token} = useAuth();
-  if(!token) return <Navigate to="/login"/>
+function ProtectedRoute({ children }) {
+    const { token } = useAuth();
+    if (!token) return <Navigate to="/login" />;
 
-  return(
-    <>
-      <NotificationBell />
-      {children}
-    </>
-  );
+    return <Layout>{children}</Layout>;
 }
 
 function App(){

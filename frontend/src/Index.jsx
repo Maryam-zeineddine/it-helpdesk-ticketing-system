@@ -1,22 +1,19 @@
 import {useAuth} from './AuthContext.jsx';
-import {useNavigate, Link} from 'react-router-dom';
+import {Link} from 'react-router-dom';
 import {useState, useEffect} from 'react';
 import api from './api.js';
 
+function statusClass(statusName){
+    return 'pill-' + statusName.toLowerCase().replace(/\s+/g, '-');
+}
+
 function Index(){
 
-    const {user, token, logout} = useAuth();
-    const navigate = useNavigate();
+    const {user, token} = useAuth();
 
     const [summary, setSummary] = useState(null);
     const [loading, setloading] = useState(true);
     const [error, setError] = useState('');
-
- 
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
-    }
 
     //Fetch the role-scoped ticket summary as soon as we have a token 
     useEffect(() => {
@@ -38,83 +35,63 @@ function Index(){
             <h1>Dashboard</h1>
             {user? (
                 <>
-                <p>Welcome, {user.name}!</p>
-                <p>Email: {user.email}</p>
-                <p>Role: {user.role?.name ?? 'No role assigned'}</p>
-                <p><Link to="/tickets">View Tickets</Link></p>
-                {(user.role?.name === 'Employee' || user.role?.name === 'Admin') && (
-                    <p><Link to="/tickets/new">+ Create New Ticket</Link></p>
-                )}
+                <p className="text-secondary">Welcome back, {user.name} — {user.role?.name ?? 'No role assigned'}</p>
 
-                {loading && <p>Loading summary...</p>}
-                {error && <p style={{color: 'red'}}>{error}</p>}
+                <div style={{ display: 'flex', gap: '0.75rem', margin: '1rem 0 1.5rem' }}>
+                    <Link to="/tickets" className="btn btn-secondary">View Tickets</Link>
+                    {(user.role?.name === 'Employee' || user.role?.name === 'Admin') && (
+                        <Link to="/tickets/new" className="btn btn-primary">+ Create New Ticket</Link>
+                    )}
+                    {user.role?.name === 'Admin' && (
+                        <Link to="/reports" className="btn btn-secondary">📊 View Reports</Link>
+                    )}
+                </div>
+
+                {loading && <p className="text-secondary">Loading summary...</p>}
+                {error && <p className="error-text">{error}</p>}
 
                 {summary && (
-                    <div style={{marginTop: '1.5rem'}}>
+                    <div>
                         <h2>Ticket Summary (last 2 months)</h2>
 
-                        {/*KPI card: total*/}
-                        <div style={{
-                            display: 'inline-block',
-                            border: '1px solid #ccc',
-                            borderRadius: '8px',
-                            padding: '1rem',
-                            marginRight: '1rem',
-                            minWidth: '120px',
-                            textAlign: 'center'
-                        }}>
-                            <div style={{ fontSize: '1.8rem', fontWeight: 'bold'}}>{summary.total}</div>
-                            <div>Total</div>
+                        <div className="kpi-row">
+                            <div className="kpi-card">
+                                <div className="kpi-value">{summary.total}</div>
+                                <div className="kpi-label">Total</div>
+                            </div>
+
+                            {Object.entries(summary.by_status).map(([statusName, count]) => (
+                                <div className="kpi-card" key={statusName}>
+                                    <div className="kpi-value">{count}</div>
+                                    <div className="kpi-label">{statusName}</div>
+                                </div>
+                            ))}
                         </div>
 
-                        {/*KPI card per status*/}
-                        {Object.entries(summary.by_status).map(([statusName,count]) => (
-                            <div  key={statusName} style={{
-                                display: 'inline-block',
-                                border: '1px solid #ccc',
-                                borderRadius: '8px',
-                                padding: '1rem',
-                                marginRight: '1rem',
-                                minWidth: '120px',
-                                textAlign: 'center'
-                            }}>
-                                <div style={{fontSize: '1.8rem', fontWeight: 'bold'}}>{count}</div>
-                                <div>{statusName}</div>
-                            </div>
-                        ))}
-
                         {summary.unassigned_tickets && summary.unassigned_tickets.length > 0 && (
-                            <div style={{marginTop: '1.5rem'}}>
-                                <h2>New Tickets Available to Take</h2>
-                                <ul>
-                                    {summary.unassigned_tickets.map((ticket) => (
-                                        <li key={ticket.id} style={{marginBottom: '0.5rem'}}>
-                                            <Link to={`/tickets/${ticket.id}`}>{ticket.title}</Link>
-                                            {' - '}{ticket.category?.name ?? 'Uncategorized'}
-                                            {' - reported by '}{ticket.employee?.name ?? 'Unknown'}
-                                            {' - '}{new Date(ticket.created_at).toLocaleDateString()}
-                                        </li>
-                                    ))}
-                                </ul>
+                            <div className="card">
+                                <h2 style={{ marginTop: 0 }}>New Tickets Available to Take</h2>
+                                {summary.unassigned_tickets.map((ticket) => (
+                                    <div key={ticket.id} style={{ padding: '0.6rem 0', borderBottom: '1px solid var(--border)' }}>
+                                        <Link to={`/tickets/${ticket.id}`}>{ticket.title}</Link>
+                                        <div className="text-secondary" style={{ fontSize: '0.85rem', marginTop: '0.15rem' }}>
+                                            {ticket.category?.name ?? 'Uncategorized'}
+                                            {' · reported by '}{ticket.employee?.name ?? 'Unknown'}
+                                            {' · '}{new Date(ticket.created_at).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         )}
 
                         {summary.unassigned_tickets && summary.unassigned_tickets.length === 0 && (
-                            <p style={{ marginTop: '1.5rem', color: '#666'}}>No new unassigned tickets right now </p>
+                            <p className="empty-state">No new unassigned tickets right now</p>
                         )}
                     </div>
                 )}
-
-                {user.role?.name === 'Admin' && (
-                    <p><Link to="/reports">📊 View Reports</Link></p>
-                )}
-
-                <p style={{marginTop: '1.5rem'}}>
-                    <button onClick={handleLogout}>Log Out</button>
-                </p>
                 </>
             ) : (
-                <p>Loading...</p>
+                <p className="text-secondary">Loading...</p>
             )}
         </div>
     )

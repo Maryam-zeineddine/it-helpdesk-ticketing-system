@@ -95,5 +95,34 @@ class TicketCommentController extends Controller
 
         return response()->json($comment->load(['user', 'attachment']), 201);
     }
+
+    //delete a comment (author of the comments, and admin can delete any comment)
+    public function destroy($id){
+        $user = Auth::guard('api') -> user();
+        $comment = TicketComment::with('attachment')->findOrFail($id);
+        $role = $user->role->name;
+
+        $isAuthor = $comment->user_id === $user->id;
+        $isAdmin = $role === 'Admin';
+
+        if(! $isAuthor && ! $isAdmin){
+            return response() -> json(['error' => 'You are not allowed to delete this comment'], 403);
+        }
+
+        if($comment->attachment){
+            \Storage::disk('public')->delete($comment->attachment->file_path);
+            $comment->attachment->delete();
+        }
+        ActivityLog::create([
+            'user_id' => $user->id,
+            'action' => 'comment_deleted',
+            'ticket_id' => $comment->ticket_id,
+            'description' => "{$user->name} deleted a comment.",
+        ]);
+
+        $comment->delete();
+
+        return response()->json(['message' => 'Comment deleted']);
+    }
 }
 

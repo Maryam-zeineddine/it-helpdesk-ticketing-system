@@ -4,6 +4,10 @@ import api from './api.js';
 import { useAuth } from './AuthContext.jsx';
 import TicketComments from './TicketComments.jsx';
 
+function statusClass(statusName){
+    return 'pill-' + statusName.toLowerCase().replace(/\s+/g, '-');
+}
+
 function TicketDetails() {
     const { id } = useParams();
     const { token, user } = useAuth();
@@ -226,116 +230,131 @@ function TicketDetails() {
 
     return (
         <div>
-            <h1>Ticket {ticket.reference_no}</h1>
-            <p><Link to="/tickets">Back to Ticket List</Link></p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h1 className="mono" style={{ fontFamily: 'var(--font-heading)' }}>
+                    Ticket <span className="mono">{ticket.reference_no}</span>
+                </h1>
+                {ticket.status?.name && (
+                    <span className={`pill ${statusClass(ticket.status.name)}`} style={{ fontSize: '0.85rem' }}>
+                        {ticket.status.name}
+                    </span>
+                )}
+            </div>
+            <p><Link to="/tickets">← Back to Ticket List</Link></p>
 
-            <ul>
-                <li><strong>Title:</strong> {ticket.title}</li>
-                <li><strong>Description:</strong> {ticket.description}</li>
-                <li><strong>Category:</strong> {ticket.category?.name}</li>
-                <li><strong>Priority:</strong> {ticket.priority?.name}</li>
-                <li><strong>Status:</strong> {ticket.status?.name}</li>
-                <li><strong>Submitted by:</strong> {ticket.employee?.name ?? '—'}</li>
-                <li><strong>Assigned to:</strong> {ticket.assigned_agent?.name ?? 'Unassigned'}</li>
-                <li><strong>Created:</strong> {new Date(ticket.created_at).toLocaleString()}</li>
-            </ul>
+            <div className="card">
+                <table>
+                    <tbody>
+                        <tr><td className="text-secondary" style={{ width: '160px', border: 'none' }}>Title</td><td style={{ border: 'none' }}>{ticket.title}</td></tr>
+                        <tr><td className="text-secondary" style={{ border: 'none' }}>Description</td><td style={{ border: 'none' }}>{ticket.description}</td></tr>
+                        <tr><td className="text-secondary" style={{ border: 'none' }}>Category</td><td style={{ border: 'none' }}>{ticket.category?.name}</td></tr>
+                        <tr><td className="text-secondary" style={{ border: 'none' }}>Priority</td><td style={{ border: 'none' }}>{ticket.priority?.name}</td></tr>
+                        <tr><td className="text-secondary" style={{ border: 'none' }}>Submitted by</td><td style={{ border: 'none' }}>{ticket.employee?.name ?? '—'}</td></tr>
+                        <tr><td className="text-secondary" style={{ border: 'none' }}>Assigned to</td><td style={{ border: 'none' }}>{ticket.assigned_agent?.name ?? 'Unassigned'}</td></tr>
+                        <tr><td className="text-secondary" style={{ border: 'none' }}>Created</td><td className="text-secondary" style={{ border: 'none' }}>{new Date(ticket.created_at).toLocaleString()}</td></tr>
+                    </tbody>
+                </table>
+            </div>
 
-            <div style={{marginTop: '1rem'}}>
-                <h3>Attachments</h3>
+            <div className="card">
+                <h3 style={{ marginTop: 0 }}>Attachments</h3>
                 {ticket.attachments && ticket.attachments.length > 0 ? (
-                    <ul>
+                    <ul style={{ margin: 0, paddingLeft: '1.2rem' }}>
                         {ticket.attachments.map((a) => (
-                            <li key={a.id}>
+                            <li key={a.id} style={{ marginBottom: '0.3rem' }}>
                                 <a href={`http://127.0.0.1:8000/storage/${a.file_path}`} target="_blank" rel="noreferrer">
                                     {a.file_name}
                                 </a>
-                                {' '}({(a.file_size / 1024).toFixed(0)} KB)
+                                {' '}<span className="text-secondary">({(a.file_size / 1024).toFixed(0)} KB)</span>
                             </li>
                         ))}
                     </ul>
                 ) : (
-                    <p style={{ color: '#666'}}>No attachments yet.</p>
+                    <p className="empty-state" style={{ padding: 0 }}>No attachments yet.</p>
                 )}
 
                 {((role === 'Employee' && isOwner) || role === 'Admin') && !isClosed && (
-                    <div>
-                        <input
-                            type="file"
-                            onChange={(e) => setAttachmentFile(e.target.files[0])}
-                        />
-                        {' '}
-                        <button disabled={!attachmentFile || uploadingAttachment} onClick={handleUploadAttachment}>
+                    <div style={{ marginTop: '0.75rem' }}>
+                        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                            <input
+                                type="file"
+                                onChange={(e) => setAttachmentFile(e.target.files[0])}
+                            />
+                            <button className="btn btn-secondary" disabled={!attachmentFile || uploadingAttachment} onClick={handleUploadAttachment}>
                                 {uploadingAttachment ? 'Uploading...' : 'Upload Attachment'}
-                        </button>
-                        <p style={{fontSize: '0.85rem', color: '#666'}}>
+                            </button>
+                        </div>
+                        <p className="text-secondary" style={{fontSize: '0.85rem', marginTop: '0.4rem'}}>
                             Allowed types: jpg, jpeg, png, gif, pdf, doc, docx, xls, xlsx, txt, zip. Size: 1-10MB.
                         </p>
-                        {attachmentError && <p style={{color: 'red'}}>{attachmentError}</p>}
+                        {attachmentError && <p className="error-text">{attachmentError}</p>}
                     </div>
                 )}
             </div>
 
-            {actionError && <p style={{ color: 'red' }}>{actionError}</p>}
+            {actionError && <p className="error-text">{actionError}</p>}
 
             {role === 'Employee' && isOwner && isOpen && (
-                <div>
-                    <h3>Edit Ticket</h3>
-                    <div>
-                        <label>Title</label><br />
-                        <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={150} />
+                <div className="card">
+                    <h3 style={{ marginTop: 0 }}>Edit Ticket</h3>
+                    <div className="form-group">
+                        <label className="form-label">Title</label>
+                        <input className="form-input" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={150} />
                     </div>
-                    <div>
-                        <label>Description</label><br />
-                        <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} />
+                    <div className="form-group">
+                        <label className="form-label">Description</label>
+                        <textarea className="form-textarea" value={description} onChange={(e) => setDescription(e.target.value)} rows={4} />
                     </div>
-                    <div>
-                        <label>Category</label><br />
-                        <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+                    <div className="form-group">
+                        <label className="form-label">Category</label>
+                        <select className="form-select" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
                             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                     </div>
-                    <div>
-                        <label>Priority</label><br />
-                        <select value={priorityId} onChange={(e) => setPriorityId(e.target.value)}>
+                    <div className="form-group">
+                        <label className="form-label">Priority</label>
+                        <select className="form-select" value={priorityId} onChange={(e) => setPriorityId(e.target.value)}>
                             {priorities.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                         </select>
                     </div>
                     <button
+                        className="btn btn-primary"
                         disabled={saving}
                         onClick={() => handleUpdate({ title, description, category_id: categoryId, priority_id: priorityId })}
                     >
                         {saving ? 'Saving...' : 'Save Changes'}
                     </button>
                     {' '}
-                    <button onClick={handleDelete} style={{ color: 'red' }}>Delete Ticket</button>
+                    <button className="btn btn-secondary" onClick={handleDelete} style={{ color: 'var(--danger)' }}>Delete Ticket</button>
                 </div>
             )}
 
             {role === 'Employee' && isOwner && !isOpen && (
-                <p><em>This ticket can no longer be edited or deleted because it is no longer Open.</em></p>
+                <p className="empty-state"><em>This ticket can no longer be edited or deleted because it is no longer Open.</em></p>
             )}
 
             {(role === 'Agent' || role === 'IT Support Agent') && (
-                <div>
-                    <h3>Manage Ticket</h3>
-                    {isClosed && <p><em>This ticket is closed and con no longer be modified or reassigned.</em></p>}
+                <div className="card">
+                    <h3 style={{ marginTop: 0 }}>Manage Ticket</h3>
+                    {isClosed && <p className="empty-state" style={{padding: 0}}><em>This ticket is closed and can no longer be modified or reassigned.</em></p>}
                     {!isClosed && (
                         <>
-                            <div>
-                                <label>Status</label><br />
-                                <select value={statusId} onChange={(e) => setStatusId(e.target.value)}>
-                                    {statuses.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                </select>
-                                {' '}
-                                <button disabled={saving} onClick={() => handleUpdate({ status_id: statusId })}>
+                            <div className="form-group" style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-end' }}>
+                                <div style={{ flex: 1 }}>
+                                    <label className="form-label">Status</label>
+                                    <select className="form-select" value={statusId} onChange={(e) => setStatusId(e.target.value)}>
+                                        {statuses.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                    </select>
+                                </div>
+                                <button className="btn btn-primary" disabled={saving} onClick={() => handleUpdate({ status_id: statusId })}>
                                      Update Status
                                 </button>
                             </div>
                             <div style={{ marginTop: '0.5rem' }}>
                                 {ticket.assigned_agent?.id === user.id ? (
-                                    <em>This ticket is assigned to you.</em>
+                                    <em className="text-secondary">This ticket is assigned to you.</em>
                                 ) : (
-                                    <button disabled={saving} onClick={() => handleAssign( user.id )}>
+                                    <button className="btn btn-secondary" disabled={saving} onClick={() => handleAssign( user.id )}>
                                         Assign to Me
                                     </button>
                                     )}
@@ -345,13 +364,15 @@ function TicketDetails() {
                                 <div style={{ marginTop: '1rem' }}>
                                     <h4>Request Cancellation</h4>
                                     <textarea
+                                        className="form-textarea"
                                         value={cancellationReason}
                                         onChange={(e) => setCancellationReason(e.target.value)}
                                         rows={2}
                                         placeholder="Reason for cancellation..."
-                                        style={{ width: '100%' }}
                                     />
                                     <button
+                                        className="btn btn-secondary"
+                                        style={{ marginTop: '0.5rem' }}
                                         disabled={!cancellationReason.trim() || requestingCancellation}
                                         onClick={handleRequestCancellation}
                                     >
@@ -360,7 +381,7 @@ function TicketDetails() {
                                 </div>
                             )}
                             {isCancellationRequested && (
-                                <p style={{ marginTop: '1rem' }}><em>A cancellation request is pending Manager review.</em></p>
+                                <p className="text-secondary" style={{ marginTop: '1rem' }}><em>A cancellation request is pending Manager review.</em></p>
                             )}
 
                         </>
@@ -369,35 +390,36 @@ function TicketDetails() {
             )}
 
             {role === 'Admin' && (
-                <div>
-                    <h3>Admin: Full Edit</h3>
-                    <div>
-                        <label>Title</label><br />
-                        <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={150} />
+                <div className="card">
+                    <h3 style={{ marginTop: 0 }}>Admin: Full Edit</h3>
+                    <div className="form-group">
+                        <label className="form-label">Title</label>
+                        <input className="form-input" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={150} />
                     </div>
-                    <div>
-                        <label>Description</label><br />
-                        <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} />
+                    <div className="form-group">
+                        <label className="form-label">Description</label>
+                        <textarea className="form-textarea" value={description} onChange={(e) => setDescription(e.target.value)} rows={4} />
                     </div>
-                    <div>
-                        <label>Category</label><br />
-                        <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+                    <div className="form-group">
+                        <label className="form-label">Category</label>
+                        <select className="form-select" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
                             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                     </div>
-                    <div>
-                        <label>Priority</label><br />
-                        <select value={priorityId} onChange={(e) => setPriorityId(e.target.value)}>
+                    <div className="form-group">
+                        <label className="form-label">Priority</label>
+                        <select className="form-select" value={priorityId} onChange={(e) => setPriorityId(e.target.value)}>
                             {priorities.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                         </select>
                     </div>
-                    <div>
-                        <label>Status</label><br />
-                        <select value={statusId} onChange={(e) => setStatusId(e.target.value)}>
+                    <div className="form-group">
+                        <label className="form-label">Status</label>
+                        <select className="form-select" value={statusId} onChange={(e) => setStatusId(e.target.value)}>
                             {statuses.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                         </select>
                     </div>
                     <button
+                        className="btn btn-primary"
                         disabled={saving}
                         onClick={() => handleUpdate({
                             title,
@@ -410,37 +432,36 @@ function TicketDetails() {
                         {saving ? 'Saving...' : 'Save Changes'}
                     </button>
                     {' '}
-                    <button onClick={handleDelete} style={{ color: 'red' }}>Delete Ticket</button>
+                    <button className="btn btn-secondary" onClick={handleDelete} style={{ color: 'var(--danger)' }}>Delete Ticket</button>
 
-                    <div style={{ marginTop: '1rem'}}>
+                    <div style={{ marginTop: '1.25rem'}}>
                         <h4>Assign Ticket</h4>
                         {isClosed? (
-                            <p><em>This ticket is Closed and cannot be reassigned. Reopen it first by changing its status above.</em></p>
+                            <p className="empty-state" style={{padding: 0}}><em>This ticket is Closed and cannot be reassigned. Reopen it first by changing its status above.</em></p>
                         ):(
-                            <>
-                                <select value ={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}>
-                                    <option value="">--Select an agent --</option>
+                            <div style={{ display: 'flex', gap: '0.6rem' }}>
+                                <select className="form-select" style={{ width: 'auto' }} value ={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}>
+                                    <option value="">-- Select an agent --</option>
                                     {agents.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                                 </select>
-                                {' '}
-                                <button disabled={saving || !assignedTo} onClick={() => handleAssign(assignedTo)}>
+                                <button className="btn btn-secondary" disabled={saving || !assignedTo} onClick={() => handleAssign(assignedTo)}>
                                     Assign
                                 </button>
-                            </>
+                            </div>
                         )}
                     </div>
                 </div>
             )}
-        
+
             {role === 'Manager' && isCancellationRequested && (
-                <div>
-                    <h3>Resolve Cancellation Request</h3>
+                <div className="card">
+                    <h3 style={{ marginTop: 0 }}>Resolve Cancellation Request</h3>
                     {cancellationReasonText && (
-                        <p style={{background: '#fff8e1', padding: '0.5rem', borderRadius: '4px'}}>
+                        <p style={{background: 'var(--accent-soft)', padding: '0.6rem 0.85rem', borderRadius: 'var(--radius-sm)'}}>
                             {cancellationReasonText}
                         </p>
                     )}
-                    <div>
+                    <div style={{ marginTop: '0.5rem' }}>
                         <label>
                             <input
                                 type="radio"
@@ -466,7 +487,7 @@ function TicketDetails() {
 
                     {resolveDecision === 'reassign' && (
                         <div style={{ marginTop: '0.5rem' }}>
-                            <select value={resolveAssignedTo} onChange={(e) => setResolveAssignedTo(e.target.value)}>
+                            <select className="form-select" style={{ width: 'auto' }} value={resolveAssignedTo} onChange={(e) => setResolveAssignedTo(e.target.value)}>
                                 <option value="">-- Select an agent --</option>
                                 {agents.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                             </select>
@@ -474,7 +495,8 @@ function TicketDetails() {
                     )}
 
                     <button
-                        style={{ marginTop: '0.5rem' }}
+                        className="btn btn-primary"
+                        style={{ marginTop: '0.75rem' }}
                         disabled={resolvingCancellation || (resolveDecision === 'reassign' && !resolveAssignedTo)}
                         onClick={handleResolveCancellation}
                     >
@@ -484,10 +506,12 @@ function TicketDetails() {
             )}
 
             {role === 'Manager' && !isCancellationRequested && (
-                <p><em>View-only. No pending cancellation requests on this ticket.</em></p>
+                <p className="empty-state"><em>View-only. No pending cancellation requests on this ticket.</em></p>
             )}
 
-            <TicketComments ticketId={id} />
+            <div className="card">
+                <TicketComments ticketId={id} />
+            </div>
         </div>
     );
 }

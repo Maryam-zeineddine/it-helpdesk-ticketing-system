@@ -44,6 +44,7 @@ Route:: middleware('auth:api')->group(function(){
     Route::get('/dashboard/report/export/excel', [DashboardController::class, 'exportExcel']);
     Route::post('/ai/suggest-category-priority', [AiController::class, 'suggestCategoryPriority']);
     Route::post('/ai/chat', [AiController::class, 'chat']);
+    Route::delete('/comments/{id}', [TicketCommentController::class, 'destroy']);
 
 
 
