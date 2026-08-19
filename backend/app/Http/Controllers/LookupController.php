@@ -32,4 +32,9 @@ class LookupController extends Controller
 
         return response()->json($agents);
     }
+
+    public function roles()
+    {
+        return response()->json(\App\Models\Role::all());
+    }
 }

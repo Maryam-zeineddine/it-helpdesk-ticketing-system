@@ -19,28 +19,34 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
-            'role_id' => 'nullable|exists:roles,id', 
         ]);
 
         if($validator -> fails())
             {
                 return response() -> json($validator->errors(),422);
             }
-        
-        $user = User::create([
-            'name' => $request -> name,
-            'email' => $request -> email,
-            'password' => $request -> password, //auto-hashed via the 'hashed' cast in the User model
-            'role_id' => $request->role_id,
-        ]);
 
-        $token = JWTAuth::fromUser($user);
+            //role_id is not accepted from the request; new users have no role until an admin assignes one
+            $user = User::create([
+                'name' => $request -> name,
+                'email' => $request -> email,
+                'password' => $request -> password,
+                'role_id' => null,
+            ]);
 
-        return response() -> json([
-            'user' => $user,
-            'token' => $token,
-        ], 201);
-
+            $adminIds = \App\Services\NotificationService::userIdsWithRoles(['Admin']);
+            \App\Services\NotificationService::notify(
+                $adminIds,
+                'New user waiting role assignment',
+                "{$user->name} ({$user->email}) just registered and needs a role assigned",
+                "/users",
+                'New User Registered'
+            );
+            $token = JWTAuth::fromUser($user);
+            return response()->json([
+                'user' => $user,
+                'token' => $token,
+            ], 201);
     }
 
     /**

@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\AiController;
+use App\Http\Controllers\UserController;
 
 //Public routes. no token requiered
 //anyone can call these to create an account or get a token.
@@ -45,6 +46,10 @@ Route:: middleware('auth:api')->group(function(){
     Route::post('/ai/suggest-category-priority', [AiController::class, 'suggestCategoryPriority']);
     Route::post('/ai/chat', [AiController::class, 'chat']);
     Route::delete('/comments/{id}', [TicketCommentController::class, 'destroy']);
+    Route::get('/roles', [LookUpController::class, 'roles']);
+    Route::get('/users', [UserController::class, 'index']);
+    Route::post('/users/{id}/assign-role', [UserController::class, 'assignRole']);
+    Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
 
 
