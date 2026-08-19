@@ -35,47 +35,54 @@ function Register(){
     }
 
     return (
-        <div>
-            <h1>Register</h1>
-            <form onSubmit={handelSubmit}>
-                <div>
-                    <label>Name</label>
-                    <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                    />
-                </div>
+        <div className="auth-shell">
+            <div className="auth-card">
+                <div className="auth-logo">🛠️ IT Help Desk</div>
+                <h1 style={{ fontSize: '1.3rem', marginBottom: '1.25rem' }}>Register</h1>
 
-                <div>
-                    <label>Email</label>
-                    <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    />
-                </div>
+                <form onSubmit={handelSubmit}>
+                    <div className="form-group">
+                        <label className="form-label">Name</label>
+                        <input
+                            className="form-input"
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            required
+                        />
+                    </div>
 
-                <div>
-                    <label>Password</label>
-                    <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    />
-                </div>
+                    <div className="form-group">
+                        <label className="form-label">Email</label>
+                        <input
+                            className="form-input"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </div>
 
-                {error && <p style={{color: 'red'}}>{error}</p>}
+                    <div className="form-group">
+                        <label className="form-label">Password</label>
+                        <input
+                            className="form-input"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
 
-                <button type="submit">Register</button>
-            </form>
+                    {error && <p className="error-text">{error}</p>}
 
-            <p>
-                Already have an account? <Link to = "/login"> Log in </Link>
-            </p>
+                    <button className="btn btn-primary" style={{ width: '100%' }} type="submit">Register</button>
+                </form>
+
+                <p className="auth-footer">
+                    Already have an account? <Link to="/login">Log in</Link>
+                </p>
+            </div>
         </div>
     )
 }

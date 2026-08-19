@@ -33,42 +33,42 @@ function Login(){
     }
 
     return(
+        <div className="auth-shell">
+            <div className="auth-card">
+                <div className="auth-logo">🛠️ IT Help Desk</div>
+                <h1 style={{ fontSize: '1.3rem', marginBottom: '1.25rem' }}>Log In</h1>
 
-        <div>
+                <form onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label className="form-label">Email</label>
+                        <input
+                            className="form-input"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </div>
 
-            <h1>
-                Login
-            </h1>
+                    <div className="form-group">
+                        <label className="form-label">Password</label>
+                        <input
+                            className="form-input"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
 
-            <form onSubmit={handleSubmit}>
+                    {error && <p className="error-text">{error}</p>}
+                    <button className="btn btn-primary" style={{ width: '100%' }} type="submit">Log In</button>
+                </form>
 
-                <div>
-                    <label>Email</label>
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
-                </div>
-
-                <div>
-                    <label>Password</label>
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
-                </div>
-
-                {error && <p style={{color: 'red'}}>{error} </p>}
-                <button type="submit">Log In</button>
-
-            </form>
-               <p>
-                Don't have an account? <Link to="/register">Register</Link>
-               </p> 
+                <p className="auth-footer">
+                    Don't have an account? <Link to="/register">Register</Link>
+                </p>
+            </div>
         </div>
     )
     

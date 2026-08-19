@@ -8,6 +8,7 @@ import CreateTicket from './CreateTicket.jsx';
 import TicketDetails from './TicketDetails.jsx';
 import Reports from './Reports.jsx';
 import Layout from './Layout.jsx';
+import ManageUsers from './ManageUsers.jsx';
 
 function ProtectedRoute({ children }) {
     const { token } = useAuth();
@@ -20,7 +21,7 @@ function App(){
   return(
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/Register" element={<Register />} />
+      <Route path="/register" element={<Register />} />
       <Route
       path="/" 
       element={
@@ -62,6 +63,16 @@ function App(){
         </ProtectedRoute>
       }
       />
+
+      <Route
+      path="/users"
+      element={
+        <ProtectedRoute>
+          <ManageUsers />
+        </ProtectedRoute>
+      }
+      />
+      
     </Routes>
   )
 }

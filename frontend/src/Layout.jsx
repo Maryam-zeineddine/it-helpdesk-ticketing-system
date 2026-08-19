@@ -19,26 +19,36 @@ function Layout({children}){
             <aside className="sidebar">
                 <div className="sidebar-logo">🛠️ IT Help Desk</div>
                 <nav className="sidebar-nav">
-                    <navLink to="/" end className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}>
+                    <NavLink to="/" end className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}>
+                        Dashboard
+                    </NavLink>
+                    <NavLink to="/tickets" className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}>
                         Tickets
-                    </navLink>
+                    </NavLink>
                     {canCreate && (
                         <NavLink to="/tickets/new" className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}>
                             + New Ticket
                         </NavLink>
                     )}
                     {isAdmin && (
-                        <NavLink to="/reports" className={({isActive}) => `sidebar-link${isActive ? 'active' : ''}`}>
+                        <NavLink to="/reports" className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}>
                             Reports
                         </NavLink>
                     )}
+
+                    {isAdmin && (
+                        <NavLink to="/users" className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}>
+                            Manage Users
+                        </NavLink>
+                    )}
+
                 </nav>
             </aside>
 
             <div className="main-area">
                 <header className="topbar">
                     <NotificationBell />
-                    <span className="topbar-user">{user?.name} . {user?.role?.name}</span>
+                    <span className="topbar-user">{user?.name} · {user?.role?.name}</span>
                     <button className="btn btn-secondary" onClick={handleLogout}>Log Out</button>
                 </header>
 
