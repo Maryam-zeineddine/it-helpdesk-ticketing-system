@@ -76,46 +76,52 @@ function Reports(){
 
     return (
         <div>
-            <p><Link to="/">← Back to Dashboard</Link></p>
             <h1>Reports</h1>
 
-            {/*Range selector*/}
-            <div style={{ marginBottom: '1rem' }}>
-                <button
-                    onClick={() => setRange('month')}
-                    style={{ fontWeight: range === 'month' ? 'bold' : 'normal' }}
-                >
-                    This Month
-                </button>
-                {' '}
-                <button
-                    onClick={() => setRange('year')}
-                    style={{ fontWeight: range === 'year' ? 'bold' : 'normal' }}
-                >
-                    This Year
-                </button>
-                {' '}
-                <button
-                    onClick={() => setRange('custom')}
-                    style={{ fontWeight: range === 'custom' ? 'bold' : 'normal' }}
-                >
-                    Custom Range
-                </button>
+            <div className="card">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', alignItems: 'center' }}>
+                    <button
+                        className={`btn btn-secondary${range === 'month' ? ' active' : ''}`}
+                        onClick={() => setRange('month')}
+                    >
+                        This Month
+                    </button>
+                    <button
+                        className={`btn btn-secondary${range === 'year' ? ' active' : ''}`}
+                        onClick={() => setRange('year')}
+                    >
+                        This Year
+                    </button>
+                    <button
+                        className={`btn btn-secondary${range === 'custom' ? ' active' : ''}`}
+                        onClick={() => setRange('custom')}
+                    >
+                        Custom Range
+                    </button>
+
+                    <span style={{ flex: 1 }} />
+
+                    <button className="btn btn-primary" onClick={() => handleExport('pdf')}>Export PDF</button>
+                    <button className="btn btn-primary" onClick={() => handleExport('excel')}>Export CSV (Excel)</button>
+                </div>
 
                 {range === 'custom' && (
-                    <div style={{ marginTop: '0.5rem' }}>
+                    <div style={{ marginTop: '0.75rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                         <label>
                             From:{' '}
                             <input
+                                className="form-input"
+                                style={{ width: 'auto', display: 'inline-block' }}
                                 type="date"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
                             />
                         </label>
-                        {' '}
                         <label>
                             To:{' '}
                             <input
+                                className="form-input"
+                                style={{ width: 'auto', display: 'inline-block' }}
                                 type="date"
                                 value={endDate}
                                 onChange={(e) => setEndDate(e.target.value)}
@@ -123,61 +129,67 @@ function Reports(){
                         </label>
                     </div>
                 )}
-                    <div style={{ marginTop: '0.5rem' }}>
-                    <button onClick={() => handleExport('pdf')}>Export PDF</button>
-                    {' '}
-                    <button onClick={() => handleExport('excel')}>Export CSV (Excel)</button>
-                </div>
             </div>
 
-            {loading && <p>Loading report...</p>}
-            {error && <p style={{ color: 'red' }}>{error}</p>}
+            {loading && <p className="text-secondary">Loading report...</p>}
+            {error && <p className="error-text">{error}</p>}
 
             {reportData && (
                 <div>
-                    <p>
-                        <strong>Date range:</strong> {reportData.start_date} to {reportData.end_date}
-                        {' — '}
-                        <strong>Total tickets:</strong> {reportData.total}
-                        {' — '}
-                        <strong>Average time to resolve:</strong>{' '}
-                        {reportData.average_resolution_hours !== null
-                            ? `${reportData.average_resolution_hours} hours`
-                            : 'No resolved/closed tickets yet in this range'}
+                    <div className="kpi-row">
+                        <div className="kpi-card">
+                            <div className="kpi-value">{reportData.total}</div>
+                            <div className="kpi-label">Total Tickets</div>
+                        </div>
+                        <div className="kpi-card">
+                            <div className="kpi-value">
+                                {reportData.average_resolution_hours !== null ? reportData.average_resolution_hours : '—'}
+                            </div>
+                            <div className="kpi-label">Avg. Resolution (hrs)</div>
+                        </div>
+                    </div>
+                    <p className="text-secondary" style={{ fontSize: '0.85rem', marginTop: '-0.5rem' }}>
+                        {reportData.start_date} to {reportData.end_date}
                     </p>
 
-                    <h2>Tickets by Status</h2>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={toChartData(reportData.by_status)}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="label" />
-                            <YAxis allowDecimals={false} />
-                            <Tooltip />
-                            <Bar dataKey="count" fill="#4a90d9" />
-                        </BarChart>
-                    </ResponsiveContainer>
+                    <div className="card">
+                        <h2 style={{ marginTop: 0 }}>Tickets by Status</h2>
+                        <ResponsiveContainer width="100%" height={280}>
+                            <BarChart data={toChartData(reportData.by_status)}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                                <XAxis dataKey="label" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
+                                <YAxis allowDecimals={false} tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
+                                <Tooltip />
+                                <Bar dataKey="count" fill="#D9A62E" radius={[6, 6, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
 
-                    <h2>Tickets by Category</h2>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={toChartData(reportData.by_category)}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="label" />
-                            <YAxis allowDecimals={false} />
-                            <Tooltip />
-                            <Bar dataKey="count" fill="#57a773" />
-                        </BarChart>
-                    </ResponsiveContainer>
+                    <div className="card">
+                        <h2 style={{ marginTop: 0 }}>Tickets by Category</h2>
+                        <ResponsiveContainer width="100%" height={280}>
+                            <BarChart data={toChartData(reportData.by_category)}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                                <XAxis dataKey="label" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
+                                <YAxis allowDecimals={false} tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
+                                <Tooltip />
+                                <Bar dataKey="count" fill="#3B82F6" radius={[6, 6, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
 
-                    <h2>Tickets by Priority</h2>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={toChartData(reportData.by_priority)}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="label" />
-                            <YAxis allowDecimals={false} />
-                            <Tooltip />
-                            <Bar dataKey="count" fill="#d9974a" />
-                        </BarChart>
-                    </ResponsiveContainer>
+                    <div className="card">
+                        <h2 style={{ marginTop: 0 }}>Tickets by Priority</h2>
+                        <ResponsiveContainer width="100%" height={280}>
+                            <BarChart data={toChartData(reportData.by_priority)}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                                <XAxis dataKey="label" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
+                                <YAxis allowDecimals={false} tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
+                                <Tooltip />
+                                <Bar dataKey="count" fill="#22C55E" radius={[6, 6, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
             )}
         </div>

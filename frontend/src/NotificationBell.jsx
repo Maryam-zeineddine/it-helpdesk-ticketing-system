@@ -53,14 +53,21 @@ function NotificationBell() {
         if (notification.link) navigate(notification.link);
     };
 
-    return (
+     return (
         <div style={{ position: 'relative', display: 'inline-block' }}>
-            <button onClick={() => setShowList((prev) => !prev)}>
+            <button
+                className="btn btn-secondary"
+                onClick={() => setShowList((prev) => !prev)}
+                style={{ position: 'relative', fontSize: '1rem' }}
+            >
                 🔔
                 {unreadCount > 0 && (
                     <span style={{
-                        background: 'red', color: 'white', borderRadius: '50%',
-                        padding: '2px 6px', fontSize: '0.75rem', marginLeft: '4px'
+                        position: 'absolute', top: '-6px', right: '-6px',
+                        background: 'var(--danger)', color: 'white', borderRadius: '50%',
+                        minWidth: '18px', height: '18px', display: 'inline-flex',
+                        alignItems: 'center', justifyContent: 'center',
+                        fontSize: '0.7rem', fontWeight: 700, padding: '0 4px',
                     }}>
                         {unreadCount}
                     </span>
@@ -68,19 +75,22 @@ function NotificationBell() {
             </button>
 
             {showList && (
-                <div style={{
-                    position: 'absolute', right: 0, top: '2rem', background: 'white',
-                    border: '1px solid #ccc', borderRadius: '8px', minWidth: '280px',
-                    maxHeight: '400px', overflowY: 'auto', zIndex: 10,
+                <div className="card" style={{
+                    position: 'absolute', right: 0, top: '2.75rem',
+                    minWidth: '300px', maxHeight: '400px', overflowY: 'auto',
+                    zIndex: 10, padding: 0,
                 }}>
-                    {notifications.length === 0 && <p style={{ padding: '1rem' }}>No notifications</p>}
+                    {notifications.length === 0 && (
+                        <p className="empty-state" style={{ padding: '1rem' }}>No notifications</p>
+                    )}
                     {notifications.map((n) => (
                         <div
                             key={n.id}
                             style={{
-                                padding: '0.75rem', borderBottom: '1px solid #eee',
-                                background: n.is_read ? 'white' : '#f0f8ff',
-                                display: 'flex', alignItems: 'flex-start', gap: '0.5rem',
+                                padding: '0.75rem 1rem',
+                                borderBottom: '1px solid var(--border)',
+                                background: n.is_read ? 'transparent' : 'var(--accent-soft)',
+                                display: 'flex', alignItems: 'flex-start', gap: '0.6rem',
                             }}
                         >
                             <input
@@ -93,8 +103,8 @@ function NotificationBell() {
                                 style={{ marginTop: '0.25rem' }}
                             />
                             <div style={{ cursor: 'pointer' }} onClick={() => handleNotificationClick(n)}>
-                                <strong>{n.subject}</strong>
-                                <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#555' }}>
+                                <strong style={{ fontSize: '0.9rem' }}>{n.subject}</strong>
+                                <p className="text-secondary" style={{ margin: '0.2rem 0 0', fontSize: '0.82rem' }}>
                                     {n.description}
                                 </p>
                             </div>
@@ -105,10 +115,12 @@ function NotificationBell() {
 
             {toastMessage && (
                 <div style={{
-                    position: 'fixed', top: '1rem', right: '1rem', background: '#333',
-                    color: 'white', padding: '0.75rem 1rem', borderRadius: '6px', zIndex: 100,
+                    position: 'fixed', top: '1rem', right: '1rem',
+                    background: 'var(--sidebar-bg)', color: 'var(--text-on-sidebar)',
+                    padding: '0.75rem 1.1rem', borderRadius: 'var(--radius-sm)',
+                    boxShadow: 'var(--shadow)', zIndex: 100, fontWeight: 600, fontSize: '0.9rem',
                 }}>
-                    {toastMessage}
+                    🔔 {toastMessage}
                 </div>
             )}
         </div>

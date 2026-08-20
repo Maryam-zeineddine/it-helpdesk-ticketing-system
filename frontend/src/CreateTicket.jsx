@@ -128,86 +128,103 @@ function CreateTicket() {
     return (
         <div>
             <h1>New Ticket</h1>
+            <p><Link to="/tickets">← Back to Ticket List</Link></p>
 
-            <p><Link to="/tickets">Back to Ticket List</Link></p>
+            <div className="card">
+                <form onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label className="form-label">Title</label>
+                        <input
+                            className="form-input"
+                            type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            maxLength={150}
+                            required
+                        />
+                    </div>
 
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label>Title</label><br />
-                    <input
-                        type="text"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        maxLength={150}
-                        required
-                    />
-                </div>
+                    <div className="form-group">
+                        <label className="form-label">Description</label>
+                        <textarea
+                            className="form-textarea"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            rows={5}
+                            required
+                        />
+                    </div>
 
-                <div>
-                    <label>Description</label><br />
-                    <textarea
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        rows={5}
-                        required
-                    />
-                </div>
+                    {aiLoading && (
+                        <p className="text-secondary" style={{ fontSize: '0.88rem' }}>
+                            🤖 Thinking about category/priority...
+                        </p>
+                    )}
 
-                {aiLoading && <p style={{ color: '#888' }}>Thinking about category/priority...</p>}
+                    {aiSuggestion && !aiLoading && (
+                        <p style={{
+                            background: 'var(--accent-soft)',
+                            color: 'var(--accent-hover)',
+                            padding: '0.5rem 0.75rem',
+                            borderRadius: 'var(--radius-sm)',
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                        }}>
+                            🤖 AI suggested: {aiSuggestion.category} / {aiSuggestion.priority}
+                            <span style={{ fontWeight: 400 }}> — you can change this below</span>
+                        </p>
+                    )}
 
-                {aiSuggestion && !aiLoading && (
-                    <p style={{ color: '#2a6', fontSize: '0.9rem' }}>
-                        🤖 AI suggested: <strong>{aiSuggestion.category}</strong> / <strong>{aiSuggestion.priority}</strong>
-                        {' '}(you can change this below)
-                    </p>
-                )}
+                    {aiUnavailable && !aiLoading && (
+                        <p className="text-secondary" style={{ fontSize: '0.85rem' }}>
+                            AI suggestion unavailable right now — please choose manually below.
+                        </p>
+                    )}
 
-                {aiUnavailable && !aiLoading && (
-                    <p style={{ color: '#888', fontSize: '0.9rem' }}>
-                        AI suggestion unavailable right now — please choose manually below.
-                    </p>
-                )}
+                    <div className="form-group">
+                        <label className="form-label">Category</label>
+                        <select
+                            className="form-select"
+                            value={categoryId}
+                            onChange={(e) => {
+                                categoryTouchedByUser.current = true;
+                                setCategoryId(e.target.value);
+                            }}
+                            required
+                        >
+                            <option value="">-- Select a category --</option>
+                            {categories.map((c) => (
+                                <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                        </select>
+                    </div>
 
-                <div>
-                    <label>Category</label><br />
-                    <select
-                        value={categoryId}
-                        onChange={(e) => {
-                            categoryTouchedByUser.current = true;
-                            setCategoryId(e.target.value);
-                        }}
-                        required
-                    >
-                        <option value="">-- Select a category --</option>
-                        {categories.map((c) => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                    </select>
-                </div>
+                    <div className="form-group">
+                        <label className="form-label">Priority</label>
+                        <select
+                            className="form-select"
+                            value={priorityId}
+                            onChange={(e) => {
+                                priorityTouchedByUser.current = true;
+                                setPriorityId(e.target.value);
+                            }}
+                            required
+                        >
+                            <option value="">-- Select a priority --</option>
+                            {priorities.map((p) => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                        </select>
+                    </div>
 
-                <div>
-                    <label>Priority</label><br />
-                    <select
-                        value={priorityId}
-                        onChange={(e) => {
-                            priorityTouchedByUser.current = true;
-                            setPriorityId(e.target.value);
-                        }}
-                        required
-                    >
-                        <option value="">-- Select a priority --</option>
-                        {priorities.map((p) => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
-                        ))}
-                    </select>
-                </div>
+                    {error && <p className="error-text">{error}</p>}
 
-                {error && <p style={{ color: 'red' }}>{error}</p>}
+                    <button className="btn btn-primary" type="submit" disabled={submitting}>
+                        {submitting ? 'Creating...' : 'Create Ticket'}
+                    </button>
+                </form>
+            </div>
 
-                <button type="submit" disabled={submitting}>
-                    {submitting ? 'Creating...' : 'Create Ticket'}
-                </button>
-            </form>
             <AiChatWidget />
         </div>
     );

@@ -32,25 +32,35 @@ function AiChatWidget(){
     };
 
     return (
-        <div style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '1rem', marginTop: '1.5rem' }}>
-            <h3>🤖 Ask the IT Assistant</h3>
+        <div className="card">
+            <h3 style={{ marginTop: 0 }}>🤖 Ask the IT Assistant</h3>
             <form onSubmit={handleAsk}>
                 <textarea
+                    className="form-textarea"
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
                     placeholder="e.g. My printer won't connect, what should I try?"
                     rows={2}
-                    style={{ width: '100%' }}
                 />
-                <br />
-                <button type="submit" disabled={loading || !question.trim()}>
+                <button
+                    className="btn btn-primary"
+                    style={{ marginTop: '0.6rem' }}
+                    type="submit"
+                    disabled={loading || !question.trim()}
+                >
                     {loading ? 'Asking...' : 'Ask'}
                 </button>
             </form>
 
-            {error && <p style={{ color: 'red' }}>{error}</p>}
+            {error && <p className="error-text" style={{ marginTop: '0.6rem' }}>{error}</p>}
             {answer && (
-                <p style={{ marginTop: '0.75rem', whiteSpace: 'pre-wrap' }}>
+                <p style={{
+                    marginTop: '0.75rem',
+                    whiteSpace: 'pre-wrap',
+                    background: 'var(--accent-soft)',
+                    padding: '0.6rem 0.85rem',
+                    borderRadius: 'var(--radius-sm)',
+                }}>
                     <strong>Assistant:</strong> {answer}
                 </p>
             )}

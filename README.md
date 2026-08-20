@@ -72,12 +72,18 @@ Full stack web app for employees to submit IT support tickets, and agents/admins
   - Average time-to-resolve, in hours (measured from ticket creation to the earliest time it reached Resolved or Closed, via `ticket_status_history`)
   - Bar chart (Recharts) visualizing counts by status
 
+  ## Week 6 Deliverables (Final / Optional)
+- **Reporting extended**: `GET /dashboard/report` now supports `range=custom` (with `start_date`/`end_date`), plus `by_category` and `by_priority` breakdowns alongside the existing `by_status` and average resolution time
+- **Export**: PDF (`barryvdh/laravel-dompdf`) and CSV (PHP's built-in `fputcsv`, streamed) export of the currently-selected report range, from a dedicated `/reports` page (moved out of the Dashboard as the reporting feature set grew)
+- **AI ticket categorization & priority suggestion** — `AiTicketAnalysisService` calls OpenAI (`gpt-4o-mini`) with the ticket title/description, suggesting a category and priority from the options that actually exist in the DB (validated against real values, never trusts a hallucinated category name). Triggered via a 1.2s debounce after the employee stops typing on the Create Ticket form; the employee can override any suggestion before submitting. Fails gracefully to manual entry if the AI is unavailable.
+- **AI chatbot assistant** — `AiChatService` + `AiChatWidget.jsx`, single-turn Q&A scoped to IT support topics, available on the Create Ticket page
+- **Comment deletion** — `DELETE /comments/{id}`; a comment's author or an Admin may delete it; deleting a comment with an attachment also removes the file from disk
+- **User management** — new `UserController` (`GET /users`, `POST /users/{id}/assign-role`, `DELETE /users/{id}`) and a `/users` Admin page. New registrations no longer accept a client-supplied `role_id` (previously a self-privilege-escalation risk); users register with no role and an Admin is notified (new `New User Registered` notification type) to assign one. Admin can delete a user, blocked if that user has any tickets attached (as submitter or assigned agent) to avoid orphaned/broken ticket references.
+- **Full UI redesign** — pastel-yellow design system (`index.css` custom properties for color/spacing/type), shared `Layout.jsx` (sidebar + top bar) wrapping all authenticated routes, consistent status/priority pill component, Space Grotesk/Inter/JetBrains Mono type system across every page
+
 ## Known limitations / Next steps
-- New users register with `role_id: null` (no role assigned by default).
-  There is currently no admin interface to view *users* and assign them a role
-  (ticket *assignment* to existing Agents is implemented, but assigning a role to a new user is still manual, via direct DB update). The dashboard now fails gracefully with a clear message for role-less users instead of a server error, but the underlying registration flow is unchanged.
 - Forgot/reset password and profile management are not yet implemented.
 - SMTP email notifications are deferred — notifications are currently in-app only (DB-backed, bell icon + toast).
 - File URLs (attachments, comment images) are currently hardcoded to `http://127.0.0.1:8000/storage/...` in the frontend; this will need to be made environment-aware before deploying anywhere beyond localhost.
 - Cancellation reasons are stored as free text in `activity_logs`, not in a dedicated table — sufficient for the current "view history" use case, but not queryable/reportable on their own if that's ever needed.
-- UI styling has been deliberately deferred — functionality is prioritized while requirements are still evolving week to week; a dedicated styling pass is planned once the feature set is more complete.
+- AI features (categorization, priority suggestion, chatbot) are fully implemented and gracefully degrade to manual entry / an "unavailable" message, but have not yet been tested against a live OpenAI API response — billing setup on the OpenAI account is pending. Code has been verified against the correct request/response shape; only a working API key remains.
