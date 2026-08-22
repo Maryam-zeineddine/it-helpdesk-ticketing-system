@@ -39,16 +39,16 @@ To enable AI ticket categorization and the chatbot assistant, add a valid `OPENA
 ![Login page](docs/screenshots/login.png)
 
 ### Employee Dashboard
-![Employee dashboard](docs/screenshots/employee dashboard.png)
+![Employee dashboard](docs/screenshots/employee-dashboard.png)
 
 ### Create Ticket Form
-![Create ticket](docs/screenshots/create ticket page.png)
+![Create ticket](docs/screenshots/create-ticket-page.png)
 
 ### Ticket List 
-![Ticket list](docs/screenshots/ticket list page.png)
+![Ticket list](docs/screenshots/ticket-list-page.png)
 
 ### Ticket List with Filters
-![Ticket list](docs/screenshots/ticket list page filtered.png)
+![Ticket list](docs/screenshots/ticket-list-page-filtered.png)
 
 ### Ticket Details (Employee view)
 ![Ticket details](docs/screenshots/Ticket-details-page-as-employee.png)
@@ -61,7 +61,7 @@ To enable AI ticket categorization and the chatbot assistant, add a valid `OPENA
 
 ### Admin Reporting Dashboard
 ![Admin reports 1](docs/screenshots/reports-page-1.png)
-![Admin reports 2](docs/screenshots/reports-page-2.png)
+![Admin reports2](docs/screenshots/reports-page-2.png)
 
 ### User Management Page
 ![Manage users](docs/screenshots/manage-users-page.png)
