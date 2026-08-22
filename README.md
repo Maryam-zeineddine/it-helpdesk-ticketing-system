@@ -60,8 +60,8 @@ To enable AI ticket categorization and the chatbot assistant, add a valid `OPENA
 ![Notifications dropdown](docs/screenshots/notifications-screen.png)
 
 ### Admin Reporting Dashboard
-![Admin reports](docs/screenshots/reports-page-1.png)
-![Admin reports](docs/screenshots/reports-page-2.png)
+![Admin reports 1](docs/screenshots/reports-page-1.png)
+![Admin reports 2](docs/screenshots/reports-page-2.png)
 
 ### User Management Page
 ![Manage users](docs/screenshots/manage-users-page.png)
