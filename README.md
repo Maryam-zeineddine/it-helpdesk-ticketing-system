@@ -8,6 +8,29 @@ Full stack web app for employees to submit IT support tickets, and agents/admins
 - Database: MySQL
 - Auth: JWT (tymon/jwt-auth)
 
+## Setup Instructions
+
+### Prerequisites
+- PHP 8.3+ and Composer
+- Node.js and npm
+- MySQL (local instance)
+
+### Backend Setup
+1. `cd backend`
+2. `composer install`
+3. Copy `.env.example` to `.env` and configure your database credentials (`DB_DATABASE=it_helpdesk_db`, `DB_USERNAME`, `DB_PASSWORD`)
+4. `php artisan key:generate`
+5. `php artisan migrate --seed` — creates required lookup data (categories, priorities, statuses, notification types) plus a placeholder test user (no role assigned by default)6. `php artisan jwt:secret` (generates `JWT_SECRET`)
+7. `php artisan storage:link` (enables file attachment access)
+8. `php artisan serve` — backend runs at `http://127.0.0.1:8000`
+
+### Frontend Setup
+1. `cd frontend`
+2. `npm install`
+3. `npm run dev` — frontend runs at `http://localhost:5173`
+
+### Optional: AI Features
+To enable AI ticket categorization and the chatbot assistant, add a valid `OPENAI_API_KEY` to the backend `.env` file. Without it, these features gracefully degrade — manual category/priority entry remains fully functional.
 
 ## Week 1 Deliverables
 - Workflow diagrams: see `docs/workflow-diagrams/`

@@ -40,17 +40,17 @@ Route:: middleware('auth:api')->group(function(){
     Route::post('/tickets/{id}/attachments', [AttachmentController::class, 'storeForTicket']);
     Route::post('/tickets/{id}/request-cancellation', [TicketController::class, 'requestCancellation']);
     Route::post('/tickets/{id}/resolve-cancellation', [TicketController::class, 'resolveCancellation']);
-    Route::get('/dashboard/report', [DashboardController::class, 'report']);});
+    Route::get('/dashboard/report', [DashboardController::class, 'report']);
     Route::get('/dashboard/report/export/pdf',  [DashboardController::class, 'exportPdf']);
     Route::get('/dashboard/report/export/excel', [DashboardController::class, 'exportExcel']);
     Route::post('/ai/suggest-category-priority', [AiController::class, 'suggestCategoryPriority']);
     Route::post('/ai/chat', [AiController::class, 'chat']);
     Route::delete('/comments/{id}', [TicketCommentController::class, 'destroy']);
-    Route::get('/roles', [LookUpController::class, 'roles']);
+    Route::get('/roles', [LookupController::class, 'roles']);
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users/{id}/assign-role', [UserController::class, 'assignRole']);
     Route::delete('/users/{id}', [UserController::class, 'destroy']);
-
+});
 
 
  
