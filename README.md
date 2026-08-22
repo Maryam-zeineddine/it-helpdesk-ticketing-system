@@ -75,6 +75,9 @@ To enable AI ticket categorization and the chatbot assistant, add a valid `OPENA
 ### PDF Exportation
 ![Export pdf](docs/screenshots/export-report-pdf.png)
 
+## API Documentation
+Full endpoint reference: [API_Documentation.docx](docs/API_Documentation.pdf)
+
 ## Week 1 Deliverables
 - Workflow diagrams: see `docs/workflow-diagrams/`
 - UI wireframes: see `docs/wireframes/` (Figma file: [(https://www.figma.com/design/Ft7vXAN4m46XYrmIBziocx/IT-Help-Desk-%E2%80%93-Wireframes?node-id=6-179&t=v54j7OHQENUEFIsO-1)])
