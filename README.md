@@ -20,9 +20,18 @@ Full stack web app for employees to submit IT support tickets, and agents/admins
 2. `composer install`
 3. Copy `.env.example` to `.env` and configure your database credentials (`DB_DATABASE=it_helpdesk_db`, `DB_USERNAME`, `DB_PASSWORD`)
 4. `php artisan key:generate`
-5. `php artisan migrate --seed` — creates required lookup data (categories, priorities, statuses, notification types) plus a placeholder test user (no role assigned by default)6. `php artisan jwt:secret` (generates `JWT_SECRET`)
+5. `php artisan migrate --seed` — creates required lookup data (categories, priorities, statuses, notification types) plus a placeholder test user (no role assigned by default)
+6. `php artisan jwt:secret` (generates `JWT_SECRET`)
 7. `php artisan storage:link` (enables file attachment access)
 8. `php artisan serve` — backend runs at `http://127.0.0.1:8000`
+
+### Frontend Setup
+1. `cd frontend`
+2. `npm install`
+3. `npm run dev` — frontend runs at `http://localhost:5173`
+
+### Optional: AI Features
+To enable AI ticket categorization and the chatbot assistant, add a valid `OPENAI_API_KEY` to the backend `.env` file. Without it, these features gracefully degrade — manual category/priority entry remains fully functional.
 
 ## Screenshots
 
@@ -39,7 +48,7 @@ Full stack web app for employees to submit IT support tickets, and agents/admins
 ![Ticket list](docs/screenshots/ticket-list-page.png)
 
 ### Ticket List with Filters
-![Ticket list](docs/screenshots/ticket-list-page -filtered.png)
+![Ticket list](docs/screenshots/ticket-list-page-filtered.png)
 
 ### Ticket Details (Employee view)
 ![Ticket details](docs/screenshots/Ticket-details-page-as-employee.png)
@@ -51,7 +60,8 @@ Full stack web app for employees to submit IT support tickets, and agents/admins
 ![Notifications dropdown](docs/screenshots/notifications-screen.png)
 
 ### Admin Reporting Dashboard
-![Admin reports](docs/screenshots/reports-page-1.png)(docs/screenshots/reports-page-2.png)
+![Admin reports](docs/screenshots/reports-page-1.png)
+![Admin reports](docs/screenshots/reports-page-2.png)
 
 ### User Management Page
 ![Manage users](docs/screenshots/manage-users-page.png)
@@ -64,14 +74,6 @@ Full stack web app for employees to submit IT support tickets, and agents/admins
 
 ### PDF Exportation
 ![Export pdf](export-report-pdf.png)
-
-### Frontend Setup
-1. `cd frontend`
-2. `npm install`
-3. `npm run dev` — frontend runs at `http://localhost:5173`
-
-### Optional: AI Features
-To enable AI ticket categorization and the chatbot assistant, add a valid `OPENAI_API_KEY` to the backend `.env` file. Without it, these features gracefully degrade — manual category/priority entry remains fully functional.
 
 ## Week 1 Deliverables
 - Workflow diagrams: see `docs/workflow-diagrams/`
