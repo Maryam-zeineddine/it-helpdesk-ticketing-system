@@ -70,10 +70,10 @@ To enable AI ticket categorization and the chatbot assistant, add a valid `OPENA
 ![Cancellation request](docs/screenshots/cancellation-requested.png)
 
 ### Resolve Cancellation (Manager view)
-![Resolve cancellation](resolve-cancellation-request.png)
+![Resolve cancellation](docs/screenshots/resolve-cancellation-request.png)
 
 ### PDF Exportation
-![Export pdf](export-report-pdf.png)
+![Export pdf](docs/screenshots/export-report-pdf.png)
 
 ## Week 1 Deliverables
 - Workflow diagrams: see `docs/workflow-diagrams/`
