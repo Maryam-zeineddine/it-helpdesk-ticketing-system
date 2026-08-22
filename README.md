@@ -24,6 +24,47 @@ Full stack web app for employees to submit IT support tickets, and agents/admins
 7. `php artisan storage:link` (enables file attachment access)
 8. `php artisan serve` — backend runs at `http://127.0.0.1:8000`
 
+## Screenshots
+
+### Login
+![Login page](docs/screenshots/login.png)
+
+### Employee Dashboard
+![Employee dashboard](docs/screenshots/employee-dashboard.png)
+
+### Create Ticket Form
+![Create ticket](docs/screenshots/create-ticket-page.png)
+
+### Ticket List 
+![Ticket list](docs/screenshots/ticket-list-page.png)
+
+### Ticket List with Filters
+![Ticket list](docs/screenshots/ticket-list-page -filtered.png)
+
+### Ticket Details (Employee view)
+![Ticket details](docs/screenshots/Ticket-details-page-as-employee.png)
+
+### Ticket Details (Admin view)
+![Ticket details](docs/screenshots/ticket-details-page-as-admin.png)
+
+### Notifications
+![Notifications dropdown](docs/screenshots/notifications-screen.png)
+
+### Admin Reporting Dashboard
+![Admin reports](docs/screenshots/reports-page-1.png)(docs/screenshots/reports-page-2.png)
+
+### User Management Page
+![Manage users](docs/screenshots/manage-users-page.png)
+
+### Ticket Cancellation (Agent view)
+![Cancellation request](docs/screenshots/cancellation-requested.png)
+
+### Resolve Cancellation (Manager view)
+![Resolve cancellation](resolve-cancellation-request.png)
+
+### PDF Exportation
+![Export pdf](export-report-pdf.png)
+
 ### Frontend Setup
 1. `cd frontend`
 2. `npm install`
