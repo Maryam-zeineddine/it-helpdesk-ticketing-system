@@ -30,21 +30,23 @@ function Index(){
 
     
 
-    return(
+        return(
         <div>
-            <h1>Dashboard</h1>
             {user? (
                 <>
-                <p className="text-secondary">Welcome back, {user.name} — {user.role?.name ?? 'No role assigned'}</p>
-
-                <div style={{ display: 'flex', gap: '0.75rem', margin: '1rem 0 1.5rem' }}>
-                    <Link to="/tickets" className="btn btn-secondary">View Tickets</Link>
-                    {(user.role?.name === 'Employee' || user.role?.name === 'Admin') && (
-                        <Link to="/tickets/new" className="btn btn-primary">+ Create New Ticket</Link>
-                    )}
-                    {user.role?.name === 'Admin' && (
-                        <Link to="/reports" className="btn btn-secondary">📊 View Reports</Link>
-                    )}
+                <div className="page-header">
+                    <div>
+                        <h1>Dashboard</h1>
+                        <p className="text-secondary" style={{ margin: 0 }}>
+                            Welcome back, {user.name} — {user.role?.name ?? 'No role assigned'}
+                        </p>
+                    </div>
+                    <div className="page-header-actions">
+                        <Link to="/tickets" className="btn btn-secondary">View Tickets</Link>
+                        {(user.role?.name === 'Employee' || user.role?.name === 'Admin') && (
+                            <Link to="/tickets/new" className="btn btn-primary">+ Create New Ticket</Link>
+                        )}
+                    </div>
                 </div>
 
                 {loading && <p className="text-secondary">Loading summary...</p>}
@@ -67,6 +69,15 @@ function Index(){
                                 </div>
                             ))}
                         </div>
+
+                        {user.role?.name === 'Admin' && (
+                            <Link to="/reports" className="card card-link" style={{ display: 'block', textDecoration: 'none', marginBottom: '1.25rem' }}>
+                                <h3 style={{ marginTop: 0 }}>📊 Reports</h3>
+                                <p className="text-secondary" style={{ margin: 0 }}>
+                                    View ticket counts by date range, average time-to-resolve, and status breakdown charts.
+                                </p>
+                            </Link>
+                        )}
 
                         {summary.unassigned_tickets && summary.unassigned_tickets.length > 0 && (
                             <div className="card">

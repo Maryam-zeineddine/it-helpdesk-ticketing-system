@@ -127,8 +127,14 @@ function CreateTicket() {
 
     return (
         <div>
-            <h1>New Ticket</h1>
-            <p><Link to="/tickets">← Back to Ticket List</Link></p>
+            <div className="page-header">
+                <div>
+                    <Link to="/tickets" className="text-secondary" style={{ fontSize: '0.85rem', textDecoration: 'none' }}>
+                        ← Back to Ticket List
+                    </Link>
+                    <h1 style={{ margin: '0.3rem 0 0' }}>New Ticket</h1>
+                </div>
+            </div>
 
             <div className="card">
                 <form onSubmit={handleSubmit}>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
 import api from './api.js';
@@ -11,6 +11,21 @@ function NotificationBell() {
     const [unreadCount, setUnreadCount] = useState(0);
     const [showList, setShowList] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
+
+        const wrapperRef = useRef(null);
+
+    // Closes the dropdown when clicking anywhere outside this component,
+    // not just when re-clicking the bell.
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+                setShowList(false);
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     // Fetch notifications whenever this mounts. Also show a one-time toast
     // with the most recent notification's subject — sessionStorage ensures
@@ -54,7 +69,7 @@ function NotificationBell() {
     };
 
      return (
-        <div style={{ position: 'relative', display: 'inline-block' }}>
+            <div ref={wrapperRef} style={{ position: 'relative', display: 'inline-block' }}>
             <button
                 className="btn btn-secondary"
                 onClick={() => setShowList((prev) => !prev)}

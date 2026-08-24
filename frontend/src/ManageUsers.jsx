@@ -65,9 +65,13 @@ function ManageUsers(){
 
     return (
         <div>
-            <h1>Manage Users</h1>
-            <p className="text-secondary">Assign roles to new users, or change an existing user's role.</p>
-
+            <div className="page-header">
+                <div>
+                    <h1>Manage Users</h1>
+                    <p className="text-secondary" style={{ margin: 0 }}>Assign roles to new users, or change an existing user's role.</p>
+                </div>
+            </div>
+            
             {error && <p className="error-text">{error}</p>}
 
             {loading ? (

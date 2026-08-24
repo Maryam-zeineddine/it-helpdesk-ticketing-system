@@ -93,7 +93,17 @@ function TicketList() {
     
     return (
         <div>
-            <h1>Tickets</h1>
+            <div className="page-header">
+                <div>
+                    <h1>Tickets</h1>
+                    <p className="text-secondary" style={{ margin: 0 }}>Browse, filter, and manage tickets.</p>
+                </div>
+                {canCreate && (
+                    <div className="page-header-actions">
+                        <Link to="/tickets/new" className="btn btn-primary">+ New Ticket</Link>
+                    </div>
+                )}
+            </div>
 
             <div className="card">
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
@@ -128,42 +138,44 @@ function TicketList() {
                     </select>
                 </div>
 
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem', marginTop: '0.9rem', fontSize: '0.9rem' }}>
-                    <label>
-                        <input
-                            type="checkbox"
-                            checked={activeOnly}
-                            onChange={(e) => setActiveOnly(e.target.checked)}
-                        />
-                        {' '}Active tickets only (exclude Resolved/Closed)
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', marginTop: '0.9rem', alignItems: 'center' }}>
+                    <label className="toggle-row">
+                        <span className="toggle-switch">
+                            <input
+                                type="checkbox"
+                                checked={activeOnly}
+                                onChange={(e) => setActiveOnly(e.target.checked)}
+                            />
+                            <span className="toggle-slider"></span>
+                        </span>
+                        <span className="toggle-label" title="Excludes Resolved/Closed tickets">Active tickets only</span>
                     </label>
 
-                    <label>
-                        <input
-                            type="checkbox"
-                            checked={showAll}
-                            onChange={(e) => setShowAll(e.target.checked)}
-                        />
-                        {' '}Show all tickets (ignore last 2 months default)
+                    <label className="toggle-row">
+                        <span className="toggle-switch">
+                            <input
+                                type="checkbox"
+                                checked={showAll}
+                                onChange={(e) => setShowAll(e.target.checked)}
+                            />
+                            <span className="toggle-slider"></span>
+                        </span>
+                        <span className="toggle-label" title="Ignores the last 2 months default range">Show all tickets</span>
                     </label>
 
-                    <label>
-                        From:{' '}
+                    <div className="date-range-group">
                         <input
                             type="date"
                             value={fromDate}
                             onChange={(e) => setFromDate(e.target.value)}
                         />
-                    </label>
-
-                    <label>
-                        To:{' '}
+                        <span className="date-range-separator">→</span>
                         <input
                             type="date"
                             value={toDate}
                             onChange={(e) => setToDate(e.target.value)}
                         />
-                    </label>
+                    </div>
                 </div>
             </div>
 
@@ -204,13 +216,32 @@ function TicketList() {
                                             )}
                                         </td>
                                         <td>{ticket.assigned_agent?.name ?? '—'}</td>
-                                        <td className="text-secondary">{new Date(ticket.created_at).toLocaleDateString()}</td>
-                                        <td>
-                                            <Link to={`/tickets/${ticket.id}`}>View</Link>
-                                            {' · '}
-                                            <button className="btn btn-secondary" style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem' }} onClick={() => handleViewHistory(ticket.id)}>
-                                                {expandedTicketId === ticket.id ? 'Hide History' : 'View History'}
-                                            </button>
+                                            <td>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', alignItems: 'flex-start' }}>
+                                                <Link
+                                                    to={`/tickets/${ticket.id}`}
+                                                    className="ticket-action-view"
+                                                    style={{ color: 'var(--accent-hover)', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 500 }}
+                                                >
+                                                    View
+                                                </Link>
+                                                <button
+                                                    onClick={() => handleViewHistory(ticket.id)}
+                                                    className="ticket-action-history"
+                                                    style={{
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        padding: 0,
+                                                        color: 'var(--text-secondary)',
+                                                        fontSize: '0.85rem',
+                                                        fontWeight: 500,
+                                                        cursor: 'pointer',
+                                                        textAlign: 'left',
+                                                    }}
+                                                >
+                                                    {expandedTicketId === ticket.id ? 'Hide History' : 'History'}
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                     {expandedTicketId === ticket.id && (

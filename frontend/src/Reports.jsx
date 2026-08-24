@@ -76,7 +76,16 @@ function Reports(){
 
     return (
         <div>
-            <h1>Reports</h1>
+            <div className="page-header">
+                <div>
+                    <h1>Reports</h1>
+                    <p className="text-secondary" style={{ margin: 0 }}>Ticket counts, resolution time, and status breakdowns.</p>
+                </div>
+                <div className="page-header-actions">
+                    <button className="btn btn-secondary" onClick={() => handleExport('pdf')}>Export PDF</button>
+                    <button className="btn btn-primary" onClick={() => handleExport('excel')}>Export CSV</button>
+                </div>
+            </div>
 
             <div className="card">
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', alignItems: 'center' }}>
@@ -98,11 +107,6 @@ function Reports(){
                     >
                         Custom Range
                     </button>
-
-                    <span style={{ flex: 1 }} />
-
-                    <button className="btn btn-primary" onClick={() => handleExport('pdf')}>Export PDF</button>
-                    <button className="btn btn-primary" onClick={() => handleExport('excel')}>Export CSV (Excel)</button>
                 </div>
 
                 {range === 'custom' && (

@@ -230,17 +230,23 @@ function TicketDetails() {
 
     return (
         <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h1 className="mono" style={{ fontFamily: 'var(--font-heading)' }}>
-                    Ticket <span className="mono">{ticket.reference_no}</span>
-                </h1>
+            <div className="page-header">
+                <div>
+                    <Link to="/tickets" className="text-secondary" style={{ fontSize: '0.85rem', textDecoration: 'none' }}>
+                        ← Back to Ticket List
+                    </Link>
+                    <h1 className="mono" style={{ fontFamily: 'var(--font-heading)', margin: '0.3rem 0 0' }}>
+                        Ticket <span className="mono">{ticket.reference_no}</span>
+                    </h1>
+                </div>
                 {ticket.status?.name && (
-                    <span className={`pill ${statusClass(ticket.status.name)}`} style={{ fontSize: '0.85rem' }}>
-                        {ticket.status.name}
-                    </span>
+                    <div className="page-header-actions">
+                        <span className={`pill ${statusClass(ticket.status.name)}`} style={{ fontSize: '0.85rem' }}>
+                            {ticket.status.name}
+                        </span>
+                    </div>
                 )}
             </div>
-            <p><Link to="/tickets">← Back to Ticket List</Link></p>
 
             <div className="card">
                 <table>
