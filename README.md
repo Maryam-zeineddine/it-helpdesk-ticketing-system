@@ -54,7 +54,8 @@ To enable AI ticket categorization and the chatbot assistant, add a valid `OPENA
 ![Ticket details](docs/screenshots/Ticket-details-page-as-employee.png)
 
 ### Ticket Details (Admin view)
-![Ticket details](docs/screenshots/ticket-details-page-as-admin.png)
+![Ticket details 1](docs/screenshots/ticket-details-page-as-admin-1.png)
+![Ticket details 2](docs/screenshots/ticket-details-page-as-admin-2.png)
 
 ### Notifications
 ![Notifications dropdown](docs/screenshots/notifications-screen.png)
