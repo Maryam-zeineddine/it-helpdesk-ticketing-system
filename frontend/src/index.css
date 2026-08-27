@@ -262,6 +262,26 @@ a{color: var(--accent-hover);}
   color: var(--accent-hover);
 }
 
+.btn-delete-sm {
+  display: inline-flex;
+  align-items: center;
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid var(--danger-bg);
+  border-radius: var(--radius-sm);
+  padding: 0.1rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-delete-sm:hover {
+  background: var(--danger);
+  color: #FFFFFF;
+  border-color: var(--danger);
+}
+
 /* ---------- Status / priority pills ---------- */
 .pill {
   display: inline-flex;

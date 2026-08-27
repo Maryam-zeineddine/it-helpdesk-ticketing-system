@@ -211,6 +211,22 @@ function TicketDetails() {
         }
     };
 
+    //delete an attachment then remove from local storage
+    const handleDeleteAttachment = async (attachmentId) => {
+        if (!window.confirm('Delete this attachment? This cannot be undone.')) return;
+
+        try {
+            await api.delete(`/attachments/${attachmentId}`, authHeader);
+            setTicket((prev) => ({
+                ...prev,
+                attachments: prev.attachments.filter((a) => a.id !== attachmentId),
+            }));
+        } catch (err) {
+            const data = err?.response?.data;
+            setAttachmentError(data?.error || 'Failed to delete attachment');
+        }
+    };
+
     const handleDelete = async () => {
         if (!window.confirm('Are you sure you want to delete this ticket?')) return;
 
@@ -264,7 +280,7 @@ function TicketDetails() {
 
             <div className="card">
                 <h3 style={{ marginTop: 0 }}>Attachments</h3>
-                {ticket.attachments && ticket.attachments.length > 0 ? (
+                    {ticket.attachments && ticket.attachments.length > 0 ? (
                     <ul style={{ margin: 0, paddingLeft: '1.2rem' }}>
                         {ticket.attachments.map((a) => (
                             <li key={a.id} style={{ marginBottom: '0.3rem' }}>
@@ -272,6 +288,17 @@ function TicketDetails() {
                                     {a.file_name}
                                 </a>
                                 {' '}<span className="text-secondary">({(a.file_size / 1024).toFixed(0)} KB)</span>
+                                {((a.uploaded_by === user.id) || role === 'Admin') && !isClosed && (
+                                    <>
+                                        {' · '}
+                                        <button
+                                            onClick={() => handleDeleteAttachment(a.id)}
+                                            className="btn-delete-sm"
+                                        >
+                                            Delete
+                                        </button>
+                                    </>
+                                )}
                             </li>
                         ))}
                     </ul>
@@ -291,7 +318,7 @@ function TicketDetails() {
                             </button>
                         </div>
                         <p className="text-secondary" style={{fontSize: '0.85rem', marginTop: '0.4rem'}}>
-                            Allowed types: jpg, jpeg, png, gif, pdf, doc, docx, xls, xlsx, txt, zip. Size: 1-10MB.
+                            Allowed types: jpg, jpeg, png, gif, pdf, doc, docx, xls, xlsx, txt, zip. Size: up to 10MB.
                         </p>
                         {attachmentError && <p className="error-text">{attachmentError}</p>}
                     </div>

@@ -33,10 +33,9 @@ class AttachmentController extends Controller
 
         //check file type and size
         $validator = Validator::make($request->all(), [
-            'file' => 'bail|required|file|min:1024|max:10240|mimes:jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,txt,zip',
+            'file' => 'bail|required|file|max:10240|mimes:jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,txt,zip',
         ], [
             'file.mimes' => 'This file type is not supported. Allowed types: jpg, jpeg, png, gif, pdf, doc, docx, xls, xlsx, txt, zip',
-            'file.min' => 'File is too small. Minimum size is 1MB',
             'file.max' => 'File is too large. Maximum size is 10MB',
         ]);
         
@@ -57,5 +56,25 @@ class AttachmentController extends Controller
         ]);
 
         return response()->json($attachment, 201);
+    }
+
+    //delete an attachment(admin or the person who attaches it)
+    public function destroy($id)
+    {
+        $user = Auth::guard('api')->user();
+        $attachment = Attachment::with('ticket.status')->findOrFail($id);
+        $role = $user->role->name;
+
+        $isUploader = $attachment->uploaded_by === $user->id;
+        $isAdmin = $role === 'Admin';
+
+        if(! $isUploader && ! $isAdmin){
+            return response()->json(['error' => 'This ticket is closed and its attachments can no longer be modified'], 403);
+        }
+
+        \Storage::disk('public')->delete($attachment->file_path);
+        $attachment->delete();
+
+        return response()->json(['message' => 'Attachment deleted']);
     }
 }

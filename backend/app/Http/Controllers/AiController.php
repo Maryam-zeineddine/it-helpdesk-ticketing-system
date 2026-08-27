@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\AiTicketAnalysisService;
-use app\Services\AiChatService;
+use App\Services\AiChatService;
 
 class AiController extends Controller
 {

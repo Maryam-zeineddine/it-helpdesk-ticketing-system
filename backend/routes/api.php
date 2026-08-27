@@ -50,6 +50,7 @@ Route:: middleware('auth:api')->group(function(){
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users/{id}/assign-role', [UserController::class, 'assignRole']);
     Route::delete('/users/{id}', [UserController::class, 'destroy']);
+    Route::delete('/attachments/{id}', [AttachmentController::class, 'destroy']);
 });
 
 

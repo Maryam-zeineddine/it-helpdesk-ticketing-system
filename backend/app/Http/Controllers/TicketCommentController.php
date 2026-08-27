@@ -50,9 +50,8 @@ class TicketCommentController extends Controller
         //'bail' stops at the first failing rule).
         $validator = Validator::make($request->all(), [
            'body' => 'required|string',
-           'image' => 'bail|nullable|file|min:1024|max:10240|mimes:jpg,jpeg,png,gif',
+           'image' => 'bail|nullable|file|max:10240|mimes:jpg,jpeg,png,gif',
         ], [
-            'image.min' => 'Image is too small. Minimum size is 1MB.',
             'image.max' => 'Image is too large. Maximum size is 10MB.',
             'image.mimes' => 'Only jpg, jpeg, png, or gif images are allowed on comments.',
         ]);
