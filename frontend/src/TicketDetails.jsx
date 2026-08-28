@@ -539,7 +539,7 @@ function TicketDetails() {
             )}
 
             {role === 'Manager' && !isCancellationRequested && (
-                <p className="empty-state"><em>View-only. No pending cancellation requests on this ticket.</em></p>
+                <p className="empty-state"><em>No pending cancellation requests on this ticket.</em></p>
             )}
 
             <div className="card">
